@@ -117,7 +117,18 @@ shinyServer(function(input, output, session){
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_exp1-1/input$lambdaexp)/(1/(input$lambdaexp*sqrt(input$nexp)))))))
   })
   
-  
+  output$plot_exp_prob1<-renderPlot({
+    sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Media = unname(colMeans(sim_exp())))
+    dat<-density(sim_exp$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = 1/input$lambdaexp, sd = 1/(input$lambdaexp*sqrt(input$nexp))), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_exp1,Media, input$c_exp1)), fill = "skyblue")
+
+  })
   
   output$plot_exp2 <- renderPlot({
     sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Suma = unname(colSums(sim_exp())))
@@ -141,6 +152,18 @@ shinyServer(function(input, output, session){
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_exp2-input$nexp/input$lambdaexp)/(sqrt(input$nexp)/(input$lambdaexp))))))
   })
   
+  output$plot_exp_prob2<-renderPlot({
+    sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Suma = unname(colSums(sim_exp())))
+    dat<-density(sim_exp$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$nexp/input$lambdaexp, sd = sqrt(input$nexp)/(input$lambdaexp)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_exp2,Suma, input$c_exp2)), fill = "skyblue")
+    
+  })
   
   
   
@@ -197,6 +220,20 @@ shinyServer(function(input, output, session){
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam1-input$lambdagam*input$alfagam)/(1/(sqrt(input$alfagam*input$lambdagam^2)/sqrt(input$ngam)))))))
   })
   
+  
+  output$plot_gam_prob1<-renderPlot({
+    sim_gam <- data.frame(Simulacion = 1:input$nsim_gam, Media = unname(colMeans(sim_gam())))
+    dat<-density(sim_gam$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$lambdagam*input$alfagam, sd = sqrt(input$alfagam*input$lambdagam^2)/sqrt(input$ngam)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_gam1,Media, input$c_gam1)), fill = "skyblue")
+    
+  })
+  
   output$plot_gam2 <- renderPlot({
     sim_gam <- data.frame(Simulacion = 1:input$nsim_gam, Suma = unname(colSums(sim_gam())))
     
@@ -219,7 +256,20 @@ shinyServer(function(input, output, session){
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam2-input$ngam*input$lambdagam*input$alfagam)/(sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam))))))
   })
   
-  
+  output$plot_gam_prob2<-renderPlot({
+    sim_gam <- data.frame(Simulacion = 1:input$nsim_gam, Suma = unname(colSums(sim_gam())))
+    dat<-density(sim_gam$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$ngam*input$lambdagam*input$alfagam, sd = sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_gam2,Suma, input$c_gam2)), fill = "skyblue")
+    
+  })
+
+###################################################################################################  
   
 # Simulaciones 
 sim_df <-  reactive({

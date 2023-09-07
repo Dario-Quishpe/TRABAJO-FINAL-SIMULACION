@@ -60,6 +60,9 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pteo_exp1')
                                          )
                                        ),
+                                       fluidRow(
+                                         plotOutput("plot_exp_prob1", height = "500px")
+                                       ),
                                        br(),
                                        h4(strong("Suma de variables")),
                                        fluidRow(
@@ -77,6 +80,9 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pest_exp2'),
                                                 uiOutput('pteo_exp2')
                                          )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_exp_prob2", height = "500px")
                                        ),
                                        br(),
                                        
@@ -167,6 +173,9 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pteo_gam1')
                                          )
                                        ),
+                                       fluidRow(
+                                         plotOutput("plot_gam_prob1", height = "500px")
+                                       ),
                                        br(),
                                        h4(strong("Suma de variables")),
                                        fluidRow(
@@ -184,6 +193,9 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pest_gam2'),
                                                 uiOutput('pteo_gam2')
                                          )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_gam_prob2", height = "500px")
                                        ),
                                        br(),
                               ),
