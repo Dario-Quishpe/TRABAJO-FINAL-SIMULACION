@@ -10,25 +10,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                          style = "text-align:center;color:#9A9A9A;padding:20px;font-size:2.2em"))
                            ),
         navbarPage("Simulación",
-                   navbarMenu("Teorema del Límite Central (Distribuciones Discretas)",
-                              tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial"),
-                                       br()
-                              ),
-                              tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial negativa"),
-                                       br()
-                              ),
-                              tabPanel("Distribución Poisson", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias poisson"),
-                                       br()
-                              )
-                   ),
-                   navbarMenu("Teorema del Límite Central (Distribuciones Continuas)",
-                              tabPanel("Distribución Exponencial", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial"),
-                                       br()
-                              ),
+                   navbarMenu("Teorema del Límite Central",
                               tabPanel("Distribución Uniforme", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias uniformes"),
                                        br(),
@@ -40,9 +22,9 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        ),
                                        column(9, 
                                               fluidRow(
-                                                div(tableOutput("tb_unif"), style = "font-size:80%"),
-                                                br(),
-                                                downloadButton("download_unif", "Descargar Simulaciones")
+                                                    div(tableOutput("tb_unif"), style = "font-size:80%"),
+                                                    br(),
+                                                    downloadButton("download_unif", "Descargar Simulaciones")
                                               )
                                        )
                                        ),
@@ -50,44 +32,44 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        h4("Aplicación del Teorema del Límite Central"),
                                        br(),
                                        fluidRow(
-                                         plotOutput("plot_unif", height = "500px")
+                                             plotOutput("plot_unif", height = "500px")
                                        ),
                                        br(),
                                        h4("Aproximación de probabilidades"),
                                        br(),
                                        fluidRow(
-                                         column(3,
-                                                numericInput("c_unif", "Ingrese el valor de c:", value = 2, min = 0, max = 20)
-                                         ),
-                                         column(9,
-                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
-                                                uiOutput('pest_unif'),
-                                                uiOutput('pteo_unif')
-                                         )
+                                             column(3,
+                                                    numericInput("c_unif", "Ingrese el valor de c:", value = 2, min = 0, max = 20)
+                                                    ),
+                                             column(9,
+                                                    h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                    uiOutput('pest_unif'),
+                                                    uiOutput('pteo_unif')
+                                             )
                                        ),
                                        br()
                               ),
-                              tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial negativa"),
-                                       br()
-                              ),
-                              tabPanel("Distribución de Pareto", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias poisson"),
-                                       br()
-                              ),
-                              tabPanel("Distribución Betha", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Exponencial", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias exponenciales"),
                                        br()
                               ),
-                              tabPanel("Distribución Gamma", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias normales"),
                                        br()
                               ),
-                              tabPanel("Distribución Chi-Cuadrado", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias normales"),
+                              tabPanel("Distribución Poisson", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                                       h4("Simulación de variables aleatorias poisson"),
                                        br()
                               ),
-                   ),
+                              tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                                       h4("Simulación de variables aleatorias binomial"),
+                                       br()
+                              ),
+                              tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                                       h4("Simulación de variables aleatorias binomial negativa"),
+                                       br()
+                              )
+                              ),
                    tabPanel("Kolmogorov - Smirnov",
                             h4("Test de Kolmogorov - Smirnov"),
                             fluidRow(
