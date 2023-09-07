@@ -26,8 +26,60 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                    ),
                    navbarMenu("Teorema del Límite Central (Distribuciones Continuas)",
                               tabPanel("Distribución Exponencial", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial"),
-                                       br()
+                                       h4("Simulación de variables aleatorias exponenciales"),
+                                       br(),
+                                       fluidRow(column(3, 
+                                                       numericInput("lambdaexp", "Parámetro:", value = 1, min = 0.1, max = 10),
+                                                       numericInput("nexp", "Número de variables:", value = 50, min = 10, max = 1000),
+                                                       numericInput("nsim_exp", "Número de simulaciones:", value = 1000, min = 20, max = 2000)
+                                       ),
+                                       column(9, 
+                                              fluidRow(
+                                                div(tableOutput("tb_exp"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_exp", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_exp1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_exp1", "Ingrese el valor de c:", value = 1, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_exp1'),
+                                                uiOutput('pteo_exp1')
+                                         )
+                                       ),
+                                       br(),
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_exp2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_exp2", "Ingrese el valor de c:", value = 50, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_exp2'),
+                                                uiOutput('pteo_exp2')
+                                         )
+                                       ),
+                                       br(),
+                                       
                               ),
                               tabPanel("Distribución Uniforme", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias uniformes"),
@@ -80,8 +132,60 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        br()
                               ),
                               tabPanel("Distribución Gamma", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias normales"),
-                                       br()
+                                       h4("Simulación de variables Gamma"),
+                                       br(),
+                                       fluidRow(column(3, 
+                                                       numericInput("alfagam", "Forma:", value = 10, min = 0.1, max = 20),
+                                                       numericInput("lambdagam", "Escala:", value = 10, min = 0.1, max = 20),
+                                                       numericInput("ngam", "Número de variables:", value = 50, min = 10, max = 1000),
+                                                       numericInput("nsim_gam", "Número de simulaciones:", value = 1000, min = 20, max = 2000)
+                                       ),
+                                       column(9, 
+                                              fluidRow(
+                                                div(tableOutput("tb_gam"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_gam", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_gam1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_gam1", "Ingrese el valor de c:", value = 100, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_gam1'),
+                                                uiOutput('pteo_gam1')
+                                         )
+                                       ),
+                                       br(),
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_gam2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_gam2", "Ingrese el valor de c:", value = 5000, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_gam2'),
+                                                uiOutput('pteo_gam2')
+                                         )
+                                       ),
+                                       br(),
                               ),
                               tabPanel("Distribución Chi-Cuadrado", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias normales"),
