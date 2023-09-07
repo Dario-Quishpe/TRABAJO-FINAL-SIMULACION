@@ -117,6 +117,8 @@ shinyServer(function(input, output, session){
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_exp1-1/input$lambdaexp)/(1/(input$lambdaexp*sqrt(input$nexp)))))))
   })
   
+  
+  
   output$plot_exp2 <- renderPlot({
     sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Suma = unname(colSums(sim_exp())))
     
