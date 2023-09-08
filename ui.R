@@ -217,8 +217,46 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        br()
                               ),
                               tabPanel("Distribución de Pareto", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias poisson"),
+                                       h4("Simulación de variables aleatorias (PARETO)"),
+                                       br(),
+                                       fluidRow(column(3, 
+                                                       numericInput("a_pareto", "Minimo(escala):", value = 2, min = 1, max = 1000),
+                                                       numericInput("b_pareto", "Gamma(Forma):", value = 4, min = 2, max = 1000),
+                                                       numericInput("npareto", "Número de variables:", value = 25, min = 10, max = 1000),
+                                                       numericInput("nsim_pareto", "Número de simulaciones:", value = 200, min = 20, max = 2000)
+                                       ),
+                                       column(9, 
+                                              fluidRow(
+                                                div(tableOutput("tb_pareto"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_pareto", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       br(),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       column(12,box(plotOutput("plot_Pareto_ggplot",height = 400), width = 12)),
+                                       br(),
+                                       
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_pareto", "Ingrese el valor de c:", value = 2.8, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_pareto'),
+                                                uiOutput('pteo_pareto')
+                                         )
+                                       ),
                                        br()
+
+                    
+                                
+                            
+                                       
                               ),
                               tabPanel("Distribución Betha", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias exponenciales"),
