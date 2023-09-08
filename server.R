@@ -99,6 +99,138 @@ int_conf_trad<-function(muestra,alfa){
 shinyServer(function(input, output, session){
 
   
+############################################DISTRIBUCIONES DISCRETAS################################
+  
+
+
+###########################################DISTRIBUCION BINOMIAL####################################  
+  
+  
+  ######################################DISTRIBUCION BINOMIAL########################################
+  
+  sim_binom <-  reactive({
+    req(input$nsim_binom >= 10)
+    res_binom <- matrix(nrow = input$nbinom, ncol = input$nsim_binom)
+    for(j in 1:input$nsim_binom){
+      res_binom[, j] <- rbinom(input$nbinom,input$ensayos,input$pbinom)
+    }
+    colnames(res_binom) <- paste0("Simulacion_", 1:input$nsim_binom)
+    res_binom
+  })
+  
+  
+  output$tb_binom <- function(){
+    res_binom <<- data.table(sim_binom())
+    
+    res_binom %>% 
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+      #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+      row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+      scroll_box(width = "1000px", height = "320px")
+  }
+  
+  #Boton descarga
+  
+  output$download_binom <- downloadHandler(
+    filename = function(){"Distribucion_Binomial.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res_binom), path = file)}
+  )
+  
+  
+  output$plot_binom1 <- renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))
+    
+    ggplot(sim_binom, aes(x = Media)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$ensayos*input$pbinom, sd = sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  output$pest_binom1 <- renderUI({
+    sim_binom <- data.table(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))[, Marca := ifelse(Media < input$c_binom1, 1, 0)]
+    x <- unlist(sim_binom[,mean(Marca)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  output$pteo_binom1<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_binom1-input$ensayos*input$pbinom)/(sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom))))))
+  })
+  
+  ##Probabilidad 1
+  
+  output$plot_binom_prob1<-renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))
+    dat<-density(sim_binom$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$ensayos*input$pbinom, sd = sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_binom1,Media, input$c_binom1)), fill = "skyblue")
+    
+  })
+  
+  
+  ##Suma
+  
+  output$plot_binom2 <- renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))
+    
+    ggplot(sim_binom, aes(x = Suma)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$nbinom*input$ensayos*input$pbinom, sd = sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom))), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  
+  #Probabilidad 2 simulada
+  
+  output$pest_binom2 <- renderUI({
+    sim_binom <- data.table(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))[, Suma := ifelse(Suma < input$c_binom2, 1, 0)]
+    x <- unlist(sim_binom[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  
+  output$pteo_binom2<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_binom2-input$nbinom*input$ensayos*input$pbinom)/(sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom)))))))
+  })
+  
+#Grafica
+  
+  output$plot_binom_prob2<-renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))
+    dat<-density(sim_binom$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$nbinom*input$ensayos*input$pbinom, sd = sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom))), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_binom2,Suma, input$c_binom2)), fill = "skyblue")
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+#############################################DISTRIBUCIONES CONTINUAS###############################  
+  
+  
+  
 ##############################################DISTRIBUCION EXPONECIAL################################
   
   sim_exp <-  reactive({
