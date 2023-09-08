@@ -349,17 +349,35 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                    tabPanel("Kolmogorov - Smirnov",
                             h4("Test de Kolmogorov - Smirnov"),
                             fluidRow(
-                                  column(5, 
-                                         fileInput('file1', 'Seleccione el archivo .xlsx', accept = c(".xlsx")),
-                                         div(tableOutput("carga"), style = "font-size:80%"),
-                                         tableOutput("archivo")
+                                  column(4, 
+                                         fileInput('file2', 'Seleccione el archivo .xlsx', accept = c(".xlsx")),
+                                         div(tableOutput("cargaks"), style = "font-size:50%"),
+                                         tableOutput("archivoks")
                                          ),
-                                  column(7,
-                                         selectInput("variable", "Seleccione la variable:", choices = c("Variable 1", "Variable 2", "Variable 3", "Variable 4")),
-                                         h4("Gráfico KS")
-                                         )
+                                  column(4,
+                                         selectInput("variable", "Seleccione la variable:",choice=c("1",
+                                                                                                    "2",
+                                                                                                    "3",
+                                                                                                    "4",
+                                                                                                    "5",
+                                                                                                    "6",
+                                                                                                    "7",
+                                                                                                    "8",
+                                                                                                    "9",
+                                                                                                    "10",
+                                                                                                    "11"
+                                                                                                    
+                                                                                                    )),
+                                         h4("Gráfico KS"),
+                                         plotOutput("grafica_distribuciones",width ="500px" , height = "350px"),
+          
+                                         ),
+                                  column(4,infoBoxOutput("info_boxKs"), style = "text-align:left;padding:60px;font-size:1.8em"),
+                            
+                                  
                             ),
-                            br()
+                        
+                            column(8, box(highchartOutput("grafica_densidades",height = 400), width = 12)),
                             ),
                    tabPanel("Bootstrap",
                             h4("Técnicas de remuestreo"),
