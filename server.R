@@ -403,6 +403,127 @@ output$plot_unif_prob2<-renderPlot({
   
 })
 
+##################################### DISTRIBUCION CHI-CUADRADO######################################################################################################################  
+
+# Simulaciones 
+sim_chi <-  reactive({
+  req(input$nsim_chi >= 10)
+  res_chi <- matrix(nrow = input$nchi, ncol = input$nsim_chi)
+  for(j in 1:input$nsim_chi){
+    res_chi[, j] <- rchisq(input$nchi, df= input$chi_grados, ncp=0)
+  }
+  colnames(res_chi) <- paste0("Simulacion_", 1:input$nsim_chi)
+  res_chi
+})
+
+
+## Tablas con los resultados de la simulación
+output$tb_chi <- function(){
+  res_chi <<- data.table(sim_chi())
+  
+  res_unif %>% 
+    kbl(booktabs = TRUE) %>%
+    kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+    #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+    row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+    scroll_box(width = "1000px", height = "320px")
+}
+# Botón de descarga
+output$download_chi <- downloadHandler(
+  filename = function(){"DistribucionChiCuadrada.xlsx"},
+  content = function(file){write_xlsx(as.data.frame(res_chi), path = file)}
+)
+
+
+# Gráfico que contrasta la densidad observada con la teórica
+output$plot_chi = renderPlot({
+  sim_chi <- data.frame(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))
+  
+  ggplot(sim_chi, aes(x = Media)) + 
+    geom_histogram(aes(y =..density..), breaks = seq((min(sim_chi$Media) - 0.5), (max(sim_chi$Media) + 0.5), by = 0.05), colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Media), sd = sd(sim_chi$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+
+# Probabilidades estimadas y teóricas
+
+#no me quedan bien 
+output$pest_chi <- renderUI({
+  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))[, Marca := ifelse(Media < input$c_chi, 1, 0)]
+  x <- unlist(sim_chi[,mean(Marca)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+
+output$pteo_chi <- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_chi))))
+})
+
+
+# grafico DE LA DENSIDAD 
+
+#no se hace dinamica
+output$plot_chi_1<-renderPlot({
+  sim_chi <- data.frame(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))
+  dat<-density(sim_chi$Media)
+  dat<-data.frame(Media=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+    ylab("Densidad") +
+    #grafico de la densidad normal
+    stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Media), sd =sd(sim_chi$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Media<input$chi_grados,Media, input$chi_grados)), fill = "skyblue")
+  
+})
+
+
+
+
+#GRAFICO SUMA DE VARIABLES
+
+output$plot_chi_2 <- renderPlot({
+  sim_chi <- data.frame(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))
+  
+  ggplot(sim_chi, aes(x = Suma)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Suma), sd = sd(sim_chi$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+#PLOT DE PROBABILIDADES
+
+#toca hacer bien esta proba
+output$pest_unif_3 <- renderUI({
+  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))[, Suma := ifelse(Suma < input$b, 1, 0)]
+  x <- unlist(sim_df[,mean(Suma)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+###tengo q cambiar la probabilidad teorica y la simulada
+output$pteo_unif_3<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam2-input$ngam*input$lambdagam*input$alfagam)/(sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam))))))
+})
+
+
+#GRAFICO DE LA DESNSIDAD
+#arreglar el grafico
+output$plot_chi_prob2<-renderPlot({
+  sim_chi <- data.frame(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))
+  dat<-density(sim_chi$Suma)
+  dat<-data.frame(Suma=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Suma), sd = sd(sim_chi$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Suma<input$chi_grados,Suma, input$chi_grados)), fill = "skyblue")
+  
+})
+
 
 
 ##########################################################

@@ -138,7 +138,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        br(),
                                        fluidRow(
                                          column(3,
-                                                numericInput("c_unifo", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
+                                                numericInput("C_UNIFO", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
                                          ),
                                          column(9,
                                                 h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
@@ -229,8 +229,62 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        br(),
                               ),
                               tabPanel("Distribución Chi-Cuadrado", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias normales"),
-                                       br()
+                                       h4("Simulación de variables aleatorias Chi-Cuadradas"),
+                                       br(),
+                                       fluidRow(column(3, 
+                                                       numericInput("chi_grados", "Grados de libertad:", value = 10, min = 2, max = 100),
+                                                      # numericInput("lambdagam", "Escala:", value = 10, min = 0.1, max = 20),
+                                                       numericInput("nchi", "Número de variables:", value = 50, min = 10, max = 1000),
+                                                       numericInput("nsim_chi", "Número de simulaciones:", value = 1000, min = 20, max = 2000)
+                                       ),
+                                       column(9, 
+                                              fluidRow(
+                                                div(tableOutput("tb_chi"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_chi", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_chi", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_chi", "Ingrese el valor de c:", value = 4, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_chi'),
+                                                uiOutput('pteo_chi')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_chi_1", height = "500px")
+                                       ),
+                                       br(),
+                                       
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_chi_2", height = "500px")
+                                       ),
+                                       
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       
+                                       #falta aqui las probas
+                                       
+                                       
+                                       fluidRow(
+                                         plotOutput("plot_chi_prob2", height = "500px")
+                                       ),
+                                       br(),
                               ),
                    ),
                    tabPanel("Kolmogorov - Smirnov",
