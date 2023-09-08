@@ -25,6 +25,20 @@ options(dplyr.summarise.inform = FALSE)
 
 options(scipen = 999)
 dir.p <- getwd() # Directorio principal
+# CADENA DE MARKOV
+run.mc.f <- function( P, e_0,num.iters) {
+  
+  num.estados <- nrow(P)
+  estados     <- numeric(num.iters)
+  estados[1]    <- e_0
+  
+  for(t in 2:num.iters) {
+    
+    p  <- P[estados[t-1], ]  
+    estados[t] <-  which(rmultinom(1, 1, p) == 1)
+  }
+  return(estados)
+}
 
 
 
@@ -915,7 +929,218 @@ output$info_boxKs <- renderInfoBox({
            panel.first=grid())
   })
 
+  ##############################EJERCICIOS PROCESOS EN TIEMPO DISCRETO#####################################
+output$tabla_grafo <- function(){
+  library(diagram)
+  P<-data.frame(
+    stringsAsFactors = FALSE,
+    i = c("E", "C"),
+    E = c("0,7", "0,35"),
+    C = c("0,3", "0,65")
+  )
+  kbl(P) %>% 
+    kable_styling(position = "center") %>% 
+    row_spec(0, bold = TRUE, background = "#66F681")|>
+    kable_classic("striped") 
   
+  
+}
+##grafo
+output$plot_grafo<-renderPlot({
+  P<-data.frame(
+    stringsAsFactors = FALSE,
+    i = c("E", "C"),
+    E = c("0,7", "0,35"),
+    C = c("0,3", "0,65")
+  )
+  kbl(P) %>% 
+    kable_styling(position = "center") %>% 
+    row_spec(0, bold = TRUE, background = "#66F681")|>
+    kable_classic("striped")
+  
+  graf<-matrix(c(0.7,0.3,
+                 0.35,0.65
+  ),nrow=2,ncol=2,byrow=TRUE)
+  
+  
+  plotmat(t(graf),name=c('E','C'),arr.length=.5,
+          arr.width=.4,
+          self.cex = .6,
+          self.shifty = -.01,
+          self.shiftx = .14,lwd = 1, box.lwd = 2, 
+          cex.txt = 0.8, 
+          box.size = 0.1, 
+          box.type = "circle", 
+          box.prop = 1,
+          box.col = "light blue",relsize = 0.8,
+          )
+  
+})
+###simulacion de cadenas y obtencion del comportamiento de la distribucion de probabilidad
+output$distribucion_estados<-renderHighchart({
+  
+    P <- t(matrix(c( 0.7, 0.3, 0.35, 0.65), nrow=2, ncol=2))
+    num.cadenas     <- 6000
+    num.iterations <- 500
+    
+    estados  <- matrix(NA, ncol=num.cadenas, nrow=num.iterations)
+    
+    # simular cada una de las cadenas y las guardamos en un vector
+    for(c in seq_len(num.cadenas)){
+      estados[,c] <- run.mc.f(P,1,num.iterations)
+    }
+    ###################################### Contamos el numero de cadenas que terminan en cada estado
+    contar_ocurrencias <- function(fila) {
+      contador <- c(0, 0)
+      
+      for (elemento in fila) {
+        if (elemento == 1) {
+          contador[1] <- contador[1] + 1
+        } else if (elemento == 2) {
+          contador[2] <- contador[2] + 1
+        } 
+      }
+      return(contador)
+    }
+    #######################################
+    pi_n <- matrix(NA, ncol=num.iterations, nrow=2)
+    
+    for(c in seq_len(num.iterations)){
+      pi_n[,c] <- contar_ocurrencias(estados[c,])/num.cadenas
+    }
+    #######################################
+    
+    respi_1<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[1,])
+    respi_2<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[2,])
+    respi_1<-respi_1 |> mutate(banderita="pi_E")
+    respi_2<-respi_2 |> mutate(banderita="pi_C")
+    consolidada<-merge(x = respi_1, y = respi_2, all = TRUE)
+    
+    hchart(consolidada, 
+           type = "line", 
+           hcaes(x = Tiempo, 
+                 y = Valores_pi,group=banderita)) |> 
+      hc_title(text = "COMPORTAMIENTO DE LA DISTRIBUCION DE PROBABILIDAD DE LOS ESTADOS E Y C",
+               style = list(fontWeight = "bold", fontSize = "25px"),
+               align = "center")
+    })
+
+  ####Tablitas para ele ejercicio discreto 2
+  
+  output$P <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios = c("0.7", "0","0.7"),
+      Cont_media = c("0.2", "0.7",0.1),
+      Cont_alta = c("0.1", "0,3","0.2")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+    
+  }
+  
+  output$D_n <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios= c("(λ1)^n", "0","0"),
+      Cont_Media= c("0", "(λ2)^n",0),
+      COnt_Alta = c("0", "0","(λ3)^n")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+  }
+  output$c_l_c <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios= c("21/47", "21/47","21/47"),
+      Cont_Media= c("17/47", "17/47","17/47"),
+      COnt_Alta = c("(9/47", "9/47","9/47")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+  }
+### Resultado ejercicio 2discreto'
+  output$RES_2<-renderHighchart({
+    run.mc.f <- function( P, e_0,num.iters) {
+      
+      num.estados <- nrow(P)
+      estados     <- numeric(num.iters)
+      estados[1]    <- e_0
+      
+      for(t in 2:num.iters) {
+        
+        p  <- P[estados[t-1], ]  
+        estados[t] <-  which(rmultinom(1, 1, p) == 1)
+      }
+      return(estados)
+    }
+    
+    P <- t(matrix(c( 0.7, 0.2, 0.1, 0.0, 0.7, 0.3, 0.7, 0.1, 0.2), nrow=3, ncol=3))
+    num.cadenas     <- 1500
+    num.iterations <- 500
+    
+    estados  <- matrix(NA, ncol=num.cadenas, nrow=num.iterations)
+    
+    # simular cada una de las cadenas y las fuardamos en un vector
+    for(c in seq_len(num.cadenas)){
+      estados[,c] <- run.mc.f(P,1,num.iterations)
+    }
+    ###################################### Contamos el numero de cadenas que terminan en cada estado
+    contar_ocurrencias <- function(fila) {
+      contador <- c(0, 0, 0)
+      
+      for (elemento in fila) {
+        if (elemento == 1) {
+          contador[1] <- contador[1] + 1
+        } else if (elemento == 2) {
+          contador[2] <- contador[2] + 1
+        } else if (elemento == 3) {
+          contador[3] <- contador[3] + 1
+        }
+      }
+      return(contador)
+    }
+    #######################################
+    pi_n <- matrix(NA, ncol=num.iterations, nrow=3)
+    
+    for(c in seq_len(num.iterations)){
+      pi_n[,c] <- contar_ocurrencias(estados[c,])/num.cadenas
+    }
+    #######################################
+    
+    respi_1<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[1,])
+    respi_2<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[2,])
+    respi_3<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[3,])
+    respi_1<-respi_1 |> mutate(banderita="pi_1")
+    respi_2<-respi_2 |> mutate(banderita="pi_2")
+    respi_3<-respi_3 |> mutate(banderita="pi_3")
+    consolidada1<-merge(x = respi_1, y = respi_2, all = TRUE)
+    consolidada<-merge(x = consolidada1, y = respi_3, all = TRUE)
+    
+    hchart(consolidada, 
+           type = "line", 
+           hcaes(x = Tiempo, 
+                 y = Valores_pi,group=banderita)) |> 
+      hc_title(text = "COMPORTAMIENTO DE LA DISTRIBUCION DE PROBABILIDAD DE LOS ESTADOS 1,2 y 3",
+               style = list(fontWeight = "bold", fontSize = "15px"),
+               align = "center")
+    
+  })
+
+
+      
 })
 
 
