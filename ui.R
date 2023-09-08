@@ -451,8 +451,131 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                    ),
                    navbarMenu("Procesos Estocásticos",
                               tabPanel("Cadenas en tiempo discreto",
-                                       h4("Cadenas en tiempo discreto"),
-                                       br()
+                                       h1("Cadenas en tiempo discreto"),
+                                       h2(strong("Ejercicio1: Clientes en una empresa:")),
+                                       br(),
+                                       p(" Tras realizar un estudio de mercado, los
+                                         directivos de la empresa XYZ llegan a la siguiente conclusión: cuando
+                                         transcurre cada año el 70% de sus clientes siguen siendo fieles,
+                                         mientras que el 30% de sus clientes se pasan a la competencia, el 35% de
+                                         los clientes de la competencia se pasan a la empresa XYZ, mientras que
+                                         el 65% de los que no son clientes permanecen en la competencia. Si la
+                                         empresa XYZ hoy tiene 5729 clientes y la competencia 10812, estudie la
+                                         evolución de la población de clientes de la empresa XYZ."),
+                                       h3(strong("SOLUCION TEORICA")),
+                                       br(),
+                                       p("$$\\text{Vamos a considerar los siguientes dos estados : E = Empresa XYZ, C = Competencia
+                                          y la variable}\\quad{} X_t \\quad{}  \\text{ como: empresa a la que le son fieles los clientes en el año t
+                                          }$$"),
+                                       br(),
+                                      p("$$\\text{Ahora en base a la información que se nos entrega en el enunciado
+                                          presentamos el diagrama de la cadena con su respectiva matriz de transición  :}$$"),
+                                       br(),
+                                      fluidRow(
+                                          column(8,box(plotOutput("plot_grafo",height = 600), width =15 ,style="font-size:200%")),
+                                          column(4,box(tableOutput("tabla_grafo"),height = 450, aling="left",style = "font-size:200%")),
+                                      ),
+                                      p("Ahora nosotros conocemos que nuestra cadena es finita , irreducible y además ergódica pues como"),
+                                      br(),
+                                      p("$$ p_{EE}(1)=0.7>0 \\quad{}\\text{y} \\quad{} p_{CC}(1)=0.65>0 \\quad{} \\text{tenemos que d(E)=d(C)=1} $$"),
+                                      br(),
+                                      p("y también sabemos que en toda cadena finita ,
+                                        irreducible y cerrada todos sus estados son recurrentes(recurrentes
+                                        positivos). Así existe un unica distribución estacionaria la cual es
+                                        independiente de la distribucion inicial ,no olvidemos que también es
+                                        igual a la distribución limite."),
+                                      br(),
+                                      
+                                      p("Con todo esto procedemos a calcular la distribución límite con la
+                                        siguiente expreción para cadenas de dos estados:"),
+                                      br(),
+                                      helpText('$$\\begin{align*}
+                                                \\pi_E=\\frac{0.35}{0.3+0.65}=0.538\\text{, }\\quad{}
+                                                \\pi_C=\\frac{0.3}{0.3+0.65}=0.461
+                                              \\end{align*}$$'),
+                                      p("Así obtenemos teoricamente que 0.538 es la aproximación a la proporción
+                                          a largo plazo de los clientes de la Empresa XYZ y por otro lados 0.462
+                                          es aproximadamente la proporción a largo plazo de los cliente que
+                                          corresponden a la competencia."),
+                                      br(),
+                                      p("Con lo anterior mencionado tenemos que a largo plazo"),
+                                      br(),
+                                      p("$$16541*(0.538)\\approx 8899 \\quad{} \\text{clientes corresponden a la Empresa xyz y}$$"),
+                                      br(),
+                                      p("$$16541*(0.462)\\approx 7642 \\quad{} \\text{corresponden a la competencia a largo plazo}$$"),
+                                      br(),
+                                      h3(strong("SOLUCION MEDIANTE SIMUALCION")),
+                                      br(),
+                                      p("Mediante la simulacion de 6000 cadenas de markov  y 500 iteraciones a este proceso
+                                        obtenemos los siguientes resutados" ),
+                                      br(),
+                                      column(12, box(highchartOutput("distribucion_estados",height = 400), width = 12)),
+                                      br(),
+                                      fluidRow(
+                                      valueBox(0.534, "Limite simulado de pi_E", icon = icon("star")),
+                                      valueBox(0.466, "Limite simulado de pi_c", icon = icon("star"))
+                                      ),
+                                      br(),
+                                      p("De lo cual podemos apreciar que tanto teoricamente y mediante simulación
+                                          hemos obtenido los mismos resultados"),
+                                      br(),
+                                      br(),
+                                      h2(strong("Ejercicio2: Contaminacion de la region Amazonica:")),
+                                      br(),
+                                      p("Para este ejercicio consideramos los siguientes estados:"),
+                                      br(),
+                                      p(strong("Estado 1: Terrenos limpios")),
+                                      br(),
+                                      p(strong(" Estado 2: Terrenos con nivel de contaminación medio")),
+                                      br(),
+                                      p(strong("Estado 3: Terrenos con nivel de contaminación alta")),
+                                      br(),
+                                      br(),
+                                      h3(strong("SOLUCION TEORICA")),
+                                      br(),
+                                      p("Al momento de analizar el problema que se nos ha planteado se ha llegado
+                                        a la conclusion de que la matriz de transicion debe tener esta forma:"),
+                                      br(),
+                                      column(12,align="center",tableOutput("P"),height = 200,style = "font-size:200%"),
+                                      br(),
+                                      p("Si hacemos los calculos necesarios para que exista un distribución estacionaria es decir hallar el vector"),
+                                      br(),
+                                      p("$$ \\Pi=(\\pi_1,\\pi_2,\\pi_3) \\quad{}\\text{ tal que  }\\quad{}
+                                        \\Pi P = \\Pi \\quad{} \\text{Nos da que, }\\quad{} \\pi_2<0 \\quad{} \\text{lo cual es absurdo.} $$"),
+                                      br(),
+                                      p("Por lo tanto vamos a calcular la distribución límite mediante la descomposición de
+                                        Jordan, para ellos calculamos los vectores y valores propios de P. Los
+                                        cuales son"),
+                                      p("$$\\lambda_1=1,\\lambda_2=\\dfrac{-\\sqrt{2}+3}{10},\\lambda_3=\\dfrac{\\sqrt{2}+3}{10}$$"),
+                                      br(),
+                                      p("$$v_1=(1 , 1 , 1)$$"),
+                                      p("$$v_2=(\\frac{-17\\sqrt{2}+26}{98},  \\frac{3\\sqrt{2}-12}{14} , 1)$$"),
+                                      p("$$v_3=(\\frac{17\\sqrt{2}+26}{98}, \\frac{-3\\sqrt{2}-12}{14},  1)$$"),
+                                      p("realizando el proceso correspondiente de descomposicion de Jordan encontramos "),
+                                      br(),
+                                      p("$$\\lim_{n\\to\\infty} P^n=C\\lim_{n\\to\\infty}D^nC^{-1}=$$ "),
+                                      br(),
+                                      column(12,align="center",tableOutput("c_l_c"),height = 200,style = "font-size:200%"),
+                                      br(),
+                                      p("Asi finalmente teniendo en cuenta que Pi inicial es (1,0,0) "),
+                                      br(),
+                                      p("$$\\Pi_0\\lim_{n\\to\\infty} P^n=( 0.477, 0.362 , 0.191)$$"),
+                                      br(),
+                                      p(strong("Esta distribucion limite es la misma sin importar la distribucion inicial")) ,
+                                      br(),
+                                      h3(strong("SOLUCION MEDIANTE SIMULACION")),
+                                      br(),
+                                      column(12, box(highchartOutput("RES_2",height = 400), width = 12)),
+                                      br(),
+                                      fluidRow(
+                                        valueBox(0.446, "Limite simulado de pi_1", icon = icon("star")),
+                                        valueBox(0.363, "Limite simulado de pi_2", icon = icon("star")),
+                                        valueBox(0.1906, "Limite simulado de pi_3", icon = icon("star"))
+                                      ),
+                                      br(),
+                                      br(),
+                                      
+                                      
                               ),
                               tabPanel("Cadenas en tiempo continuo",
                                        h4("Procesos de Nacimiento y Muerte"),
