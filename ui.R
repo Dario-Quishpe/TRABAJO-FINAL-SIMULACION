@@ -304,7 +304,35 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                             ),
                    tabPanel("Bootstrap",
                             h4("Técnicas de remuestreo"),
-                            br()
+                            h4("Intervalos de confianza para la Media"),
+                            br(),
+                            fluidRow(
+                              column(5, 
+                                     fileInput('fileboot', 'Seleccione el archivo .xlsx', accept = c(".xlsx")),
+                                     div(tableOutput("cargaboot"), style = "font-size:80%")
+                                     #tableOutput("archivoboot")
+                              ),
+                              column(7,
+                                     fluidRow(
+                                       box(highchartOutput("plot_boot",height = 400), width = 12)
+                                     ),
+                                     
+                              )
+                            ),
+                            br(),
+                            fluidRow(
+                              column(3,
+                                     numericInput("nivel_confboot","Nivel de confianza del intervalo", value = 95, min = 70, max = 99)
+                              )
+                            ),
+                            br(),
+                            fluidRow(
+                              uiOutput("IC_trad", height = "500px")
+                            ),
+                            fluidRow(
+                              uiOutput("IC_boot", height = "500px")
+                            ),
+                            
                    ),
                    navbarMenu("Procesos Estocásticos",
                               tabPanel("Cadenas en tiempo discreto",

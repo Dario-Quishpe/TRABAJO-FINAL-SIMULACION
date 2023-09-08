@@ -64,6 +64,38 @@ trayectoria <- function(lambda, mu, njumps){
 }
 
 
+
+#######################################FUNCIONES INTERVALOS DE CONFIANZA#######################
+
+int_conf_boot<-function(muestra,alfa){
+  n <- length(muestra)
+  x_barra <- mean(muestra)
+  # Remuestreo
+  B <- 1000
+  remuestra <- numeric(n)
+  x_barra_boot <- numeric(B)
+  estadistico_boot <- numeric(B)
+  for (k in 1:B) {
+    remuestra <- sample(muestra, n, replace = TRUE)
+    x_barra_boot[k] <- mean(remuestra)
+    estadistico_boot[k] <- sqrt(n) * (x_barra_boot[k] - x_barra)
+  }
+  # Aproximación bootstrap de los ptos críticos
+  pto_crit <- quantile(estadistico_boot, c(alfa/2, 1 - alfa/2))
+  # Construcción del IC
+  ic_inf_boot <- x_barra - pto_crit[2]/sqrt(n)
+  ic_sup_boot <- x_barra - pto_crit[1]/sqrt(n)
+  return(list(ICI=ic_inf_boot,ICS=ic_sup_boot))
+}
+
+int_conf_trad<-function(muestra,alfa){
+  n <- length(muestra)
+  t<-qt(alfa/2, n-1, lower.tail = F)
+  ic_inf<-mean(muestra)-t*sqrt(var(x))/sqrt(n)
+  ic_sup<-mean(muestra)+t*sqrt(var(x))/sqrt(n)
+  return(list(ICI=ic_inf,ICS=ic_sup))
+}
+
 shinyServer(function(input, output, session){
 
   
@@ -526,10 +558,65 @@ output$plot_chi_prob2<-renderPlot({
 
 
 
-##########################################################
+##############################BOOTSTRAP#####################################
+
+# Carga de archivo Excel
+
+  #output$archivoboot <- renderTable(input$fileboot)
+  output$cargaboot <- function(){
+    inFile <- input$fileboot
+  
+    if(is.null(inFile))
+      return(NULL)
+    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  
+    res %>%
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
+      row_spec(0, background = "#33639f", color = "#ffffff") %>%
+      scroll_box(width = "450px", height = "350px")
+  }
+
+  output$plot_boot<-renderHighchart({
+    inFile <- input$fileboot
+    if(is.null(inFile))
+      return(NULL)
+    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    hchart(res) %>% 
+      hc_title(text = "Histograma",align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  })
+  
+  output$IC_trad <- renderUI({
+    inFile <- input$fileboot
+    if(is.null(inFile))
+      return(NULL)
+    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    x<-int_conf_trad(as.vector(res),1-input$nivel_confboot)
+    a<-x$ICI
+    b<-x$ICS
+    h4(withMathJax(sprintf("Intervalo de confianza tradicional: [%.02f,%.02f]",a,b )))
+  })
+  
+  
+  output$IC_boot <- renderUI({
+    inFile <- input$fileboot
+    if(is.null(inFile))
+      return(NULL)
+    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    x<-int_conf_boot(as.vector(res),1-input$nivel_confboot)
+    a<-x$ICI
+    b<-x$ICS
+    h4(withMathJax(sprintf("Intervalo de confianza bootstrap: [%.02f,%.02f]",a,b )))
+  })
 
 # Gráfico de la trayectoria del proceso de nacimiento y muerte
-output$plot_proceso = renderPlot({
+  output$plot_proceso = renderPlot({
       
       res <- trayectoria(input$lambda, input$mu, input$njumps)
       saltos <- res$Saltos
@@ -537,7 +624,7 @@ output$plot_proceso = renderPlot({
       
       plot(tiempos, saltos, type="l", lty=1, lwd=2, col=4, xlab="Tiempo", ylab="Individuos", 
            panel.first=grid())
-})
+  })
 
   
 })
