@@ -95,8 +95,18 @@ int_conf_trad<-function(muestra,alfa){
   ic_sup<-mean(muestra)+t*sqrt(var(x))/sqrt(n)
   return(list(ICI=ic_inf,ICS=ic_sup))
 }
+############################################FUNCION QUE DETERMINA EL KS################################
+#funcion paradeterminar el ks
+TestKS <- function(x, y){
+    vars <- data.frame(y,x)
+    vars_e <- subset(vars,subset=vars[,1]==1)
+    vars_f <- subset(vars,subset=vars[,1]==0)
+    ks <- suppressWarnings(ks.test(vars_e[,2],vars_f[,2],alternative="two.sided"))
+    ks <- round(as.numeric(ks$statistic),4)
+  return(ks)
+}
 
-shinyServer(function(input, output, session){
+shinyServer(function(input, output, session){#######################Server#####################################
 
   
 ############################################DISTRIBUCIONES DISCRETAS################################
@@ -738,6 +748,103 @@ output$plot_chi_prob2<-renderPlot({
   
 })
 
+##############################KS#####################################
+# Carga de archivo Excel
+output$archivoks <- renderTable(input$file2)
+
+output$cargaks <- function(){
+      inFile <- input$file2
+
+      if(is.null(inFile))
+            return(NULL)
+      file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+      res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+
+      res %>%
+            kbl(booktabs = TRUE) %>%
+            kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
+            row_spec(0, background = "#33639f", color = "#ffffff") %>%
+            scroll_box(width = "450px", height = "350px")
+
+}
+
+#Grafica de las distribuciones acumuladas ks
+output$grafica_distribuciones <- renderPlot({   
+  inFile <- input$file2
+  
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  
+  # Comparativa de funciones de distribución
+  buenos <- ecdf(res %>% dplyr::filter(VarDep == 0) %>% pull(colnames(res)[eleccion]))
+  malos <- ecdf(res %>% dplyr::filter(VarDep == 1) %>% pull(colnames(res)[eleccion]))
+  
+  grid_var <- unique(res %>% pull(colnames(res)[eleccion]))
+  prob_acumulada_ecdf_b <- buenos(v = grid_var)
+  prob_acumulada_ecdf_m <- malos(v = grid_var)
+  
+  df_ecdf <- data.frame(var = grid_var, buenos = prob_acumulada_ecdf_b, malos = prob_acumulada_ecdf_m) %>%
+    pivot_longer(cols = c(buenos, malos), names_to = "Marca", values_to = "ecdf")
+  
+  grafico_ecdf <- ggplot(data = df_ecdf, aes(x = var, y = ecdf, color = Marca)) +
+    geom_line(size = 1) +
+    scale_color_manual(values = c("gray60", "orangered1")) +
+    labs(color = "Marca", y = "Probabilidad acumulada", x = colnames(res)[eleccion]) +
+    theme_bw() +
+    theme(legend.position = "bottom", plot.title = element_text(size = 15))
+  
+  #grafico_ecdf
+  abs_dif <-  abs(prob_acumulada_ecdf_b - prob_acumulada_ecdf_m)
+  distancia_ks <- max(abs_dif)
+  paste("Distancia Kolmogorov–Smirnov:", distancia_ks)
+  indice_ks <- which.max(abs_dif)
+  grafico_ecdf + 
+    geom_segment(aes(x = grid_var[indice_ks], xend = grid_var[indice_ks],
+                     y = prob_acumulada_ecdf_b[indice_ks], yend = prob_acumulada_ecdf_m[indice_ks]),
+                 arrow = arrow(ends = "both", length = unit(0.2,"cm")), color = "black")
+
+})
+### GRafica comparativa de las densidades
+output$grafica_densidades<-renderHighchart({
+  inFile <- input$file2
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  
+  vars <- data.frame(res$VarDep,res[,eleccion])
+  vars_e <- subset(vars,subset=vars[,1]==1)
+  vars_f <- subset(vars,subset=vars[,1]==0)
+  hc <- hchart(
+    density(vars_e[,2]), type = "area", 
+    color = "steelblue", name = "bueno"
+  ) %>%
+    hc_add_series(
+      density(vars_f[,2]), type = "area",
+      color = "#B71C1C", 
+      name = "malo") |> 
+        hc_title(text = "Comparacion de densidades") %>%
+        hc_add_theme(hc_theme_economist())
+  
+})
+
+##  infoKS
+output$info_boxKs <- renderInfoBox({
+  inFile <- input$file2
+  
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  ks<-TestKS(res[,eleccion],res$VarDep)
+  infoBox(paste("El ks calculado de la variable ",colnames(res[,eleccion])," es =",ks),  icon = icon("list", lib = "glyphicon"),
+          color = "yellow", fill = TRUE)
+})
 
 
 ##############################BOOTSTRAP#####################################
