@@ -95,6 +95,7 @@ shinyServer(function(input, output, session){
     content = function(file){write_xlsx(as.data.frame(res_exp), path = file)}
   )
   
+  
   output$plot_exp1 <- renderPlot({
     sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Media = unname(colMeans(sim_exp())))
     
@@ -166,7 +167,7 @@ shinyServer(function(input, output, session){
   })
   
   
-  
+
   
   
   
@@ -269,7 +270,7 @@ shinyServer(function(input, output, session){
     
   })
 
-###################################################################################################  
+  ##################################### DISTRIBUCION UNIFORME######################################################################################################################  
   
 # Simulaciones 
 sim_df <-  reactive({
@@ -343,6 +344,68 @@ output$carga <- function(){
             scroll_box(width = "450px", height = "350px")
 
 }
+
+# grafico DE LA DENSIDAD 
+output$plot_uni_1<-renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Media = unname(colMeans(sim_df())))
+  dat<-density(sim_df$Media)
+  dat<-data.frame(Media=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+    ylab("Densidad") +
+    #grafico de la densidad normal
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Media), sd =sd(sim_df$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Media<input$b,Media, input$b)), fill = "skyblue")
+  
+})
+
+
+
+
+#GRAFICO SUMA DE VARIABLES
+
+output$plot_uni_2 <- renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
+  #NO ME QUEDA BIEN LA NORMAL APROXIMADA 
+  ggplot(sim_df, aes(x = Suma)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+#PLOT DE PROBABILIDADES
+output$pest_unif_3 <- renderUI({
+  sim_df <- data.table(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))[, Suma := ifelse(Suma < input$b, 1, 0)]
+  x <- unlist(sim_df[,mean(Suma)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+###tengo q cambiar la probabilidad teorica y la simulada
+output$pteo_unif_3<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam2-input$ngam*input$lambdagam*input$alfagam)/(sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam))))))
+})
+
+
+#GRAFICO DE LA DESNSIDAD
+
+output$plot_unif_prob2<-renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
+  dat<-density(sim_df$Suma)
+  dat<-data.frame(Suma=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Suma<input$b,Suma, input$b)), fill = "skyblue")
+  
+})
+
+
+
+##########################################################
 
 # Gráfico de la trayectoria del proceso de nacimiento y muerte
 output$plot_proceso = renderPlot({

@@ -123,7 +123,35 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pteo_unif')
                                          )
                                        ),
-                                       br()
+                                       br(),
+                                       fluidRow(
+                                         plotOutput("plot_uni_1", height = "500px")
+                                       ),
+                                       br(),
+                                       
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_uni_2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_unifo", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_unif_3'),
+                                                uiOutput('pteo_unif_3')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_unif_prob2", height = "500px")
+                                       ),
+                                       br(),
+                                       
+                                       
                               ),
                               tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias binomial negativa"),
@@ -181,6 +209,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        fluidRow(
                                          plotOutput("plot_gam2", height = "500px")
                                        ),
+                                       
                                        br(),
                                        h4("Aproximación de probabilidades"),
                                        br(),
