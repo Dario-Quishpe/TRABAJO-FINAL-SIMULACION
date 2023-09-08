@@ -111,6 +111,16 @@ shinyServer(function(input, output, session){
     res_exp
   })
   
+  sim_norm <-  reactive({
+    req(input$nsim_norm >= 10)
+    res_norm <- matrix(nrow = input$nnorm, ncol = input$nsim_norm)
+    for(j in 1:input$nsim_norm){
+      res_norm[, j] <- rnorm(input$nnorm, mean = input$m_norm,sd = input$sd_norm)
+    }
+    colnames(res_norm) <- paste0("Simulacion_", 1:input$nsim_norm)
+    res_norm
+  })
+  
   output$tb_exp <- function(){
     res_exp <<- data.table(sim_exp())
     
@@ -122,9 +132,25 @@ shinyServer(function(input, output, session){
       scroll_box(width = "1000px", height = "320px")
   }
   
+  output$tb_norm <- function(){
+    res_norm <<- data.table(sim_norm())
+    
+    res_norm %>% 
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+      #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+      row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+      scroll_box(width = "1000px", height = "320px")
+  }
+  
   output$download_exp <- downloadHandler(
     filename = function(){"Distribucion_Exponencial.xlsx"},
     content = function(file){write_xlsx(as.data.frame(res_exp), path = file)}
+  )
+  
+  output$download_norm <- downloadHandler(
+    filename = function(){"Distribucion_Normal.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res_norm), path = file)}
   )
   
   
@@ -140,14 +166,36 @@ shinyServer(function(input, output, session){
     
   })
   
+  output$plot_norm1 <- renderPlot({
+    sim_norm <- data.frame(Simulacion = 1:input$nsim_norm, Media = unname(colMeans(sim_norm())))
+    
+    ggplot(sim_norm, aes(x = Media)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$m_norm, sd = input$sd_norm/sqrt(input$nnorm)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
   output$pest_exp1 <- renderUI({
     sim_exp <- data.table(Simulacion = 1:input$nsim_exp, Media = unname(colMeans(sim_exp())))[, Marca := ifelse(Media < input$c_exp1, 1, 0)]
     x <- unlist(sim_exp[,mean(Marca)])
     h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
   })
   
+  output$pest_norm1 <- renderUI({
+    sim_norm <- data.table(Simulacion = 1:input$nsim_norm, Media = unname(colMeans(sim_norm())))[, Marca := ifelse(Media < input$c_norm1, 1, 0)]
+    x <- unlist(sim_norm[,mean(Marca)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
   output$pteo_exp1<- renderUI({
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_exp1-1/input$lambdaexp)/(1/(input$lambdaexp*sqrt(input$nexp)))))))
+  })
+  
+  output$pteo_norm1<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_norm1-input$m_norm)/(input$sd_norm/sqrt(input$nnorm))))))
   })
   
   output$plot_exp_prob1<-renderPlot({
@@ -163,6 +211,19 @@ shinyServer(function(input, output, session){
 
   })
   
+  output$plot_norm_prob1<-renderPlot({
+    sim_norm <- data.frame(Simulacion = 1:input$nsim_norm, Media = unname(colMeans(sim_norm())))
+    dat<-density(sim_norm$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$m_norm, sd = input$sd_norm/sqrt(input$nnorm)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_norm1,Media, input$c_norm1)), fill = "skyblue")
+    
+  })
+  
   output$plot_exp2 <- renderPlot({
     sim_exp <- data.frame(Simulacion = 1:input$nsim_exp, Suma = unname(colSums(sim_exp())))
     
@@ -175,14 +236,36 @@ shinyServer(function(input, output, session){
     
   })
   
+  output$plot_norm2 <- renderPlot({
+    sim_norm <- data.frame(Simulacion = 1:input$nsim_norm, Suma = unname(colSums(sim_norm())))
+    
+    ggplot(sim_norm, aes(x = Suma)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$nnorm*input$m_norm, sd = sqrt(input$nnorm)*input$sd_norm), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
   output$pest_exp2 <- renderUI({
     sim_exp <- data.table(Simulacion = 1:input$nsim_exp, Suma = unname(colSums(sim_exp())))[, Suma := ifelse(Suma < input$c_exp2, 1, 0)]
     x <- unlist(sim_exp[,mean(Suma)])
     h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
   })
   
+  output$pest_norm2 <- renderUI({
+    sim_norm <- data.table(Simulacion = 1:input$nsim_norm, Suma = unname(colSums(sim_norm())))[, Suma := ifelse(Suma < input$c_norm2, 1, 0)]
+    x <- unlist(sim_norm[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
   output$pteo_exp2<- renderUI({
     h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_exp2-input$nexp/input$lambdaexp)/(sqrt(input$nexp)/(input$lambdaexp))))))
+  })
+  
+  output$pteo_norm2<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_norm2-input$nnorm*input$m_norm)/(input$sd_norm*sqrt(input$nnorm))))))
   })
   
   output$plot_exp_prob2<-renderPlot({
@@ -198,7 +281,18 @@ shinyServer(function(input, output, session){
     
   })
   
-  
+  output$plot_norm_prob2<-renderPlot({
+    sim_norm <- data.frame(Simulacion = 1:input$nsim_norm, Suma = unname(colSums(sim_norm())))
+    dat<-density(sim_norm$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$nnorm*input$m_norm, sd = sqrt(input$nnorm)*(input$sd_norm)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_norm2,Suma, input$c_norm2)), fill = "skyblue")
+    
+  })
 
   
   
