@@ -433,6 +433,56 @@ shinyServer(function(input, output, session){
       geom_area(mapping = aes(x = ifelse(Suma<input$c_gam2,Suma, input$c_gam2)), fill = "skyblue")
     
   })
+  ##################################### DISTRIBUCION DE PARETO ####################################################################################################################
+# Simulaciones pareto  
+sim_pareto_<-  reactive({
+  req(input$nsim_pareto >= 10)
+  res_pareto <- matrix(nrow = input$npareto, ncol = input$nsim_pareto)
+  for(j in 1:input$nsim_pareto){
+    res_pareto[, j] <- rpareto(input$npareto, input$b_pareto,input$a_pareto)
+  }
+  colnames(res_pareto) <- paste0("Simulacion_", 1:input$nsim_pareto)
+  res_pareto
+})
+
+## Tablas con los resultados de la simulación_PAreto
+output$tb_pareto <- function(){
+  res_pareto <<- data.table(sim_pareto_())
+  
+  res_pareto %>% 
+    kbl(booktabs = TRUE) %>%
+    kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+    #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+    row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+    scroll_box(width = "1000px", height = "320px")
+}
+# Botón de descarga
+output$download_pareto <- downloadHandler(
+      filename = function(){"DistribuciondePareto.xlsx"},
+      content = function(file){write_xlsx(as.data.frame(res_pareto), path = file)}
+)
+# Gráfico que contrasta la densidad observada con la teórica
+output$plot_Pareto_ggplot = renderPlot({
+  sim_pareto <- data.frame(Simulacion = 1:input$nsim_pareto, Media = unname(colMeans(sim_pareto_())))
+  
+  ggplot(sim_pareto, aes(x = Media)) + 
+    geom_histogram(aes(y =..density..), breaks = seq((min(sim_pareto$Media) - 1), (max(sim_pareto$Media) + 1), by = 0.05), colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean((sim_pareto$Media)), sd = sd(sim_pareto$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+# Probabilidades estimadas y teóricas
+output$pest_pareto <- renderUI({
+      sim_pareto <- data.table(Simulacion = 1:input$nsim_pareto, Media = unname(colMeans(sim_pareto_())))[, Marca := ifelse(Media < input$c_pareto, 1, 0)]
+        x <- unlist(sim_pareto[,mean(Marca)])
+        h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+
+output$pteo_pareto <- renderUI({
+      h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", ppareto(input$c_pareto,input$b_pareto,input$a_pareto))))
+})
 
   ##################################### DISTRIBUCION UNIFORME######################################################################################################################  
   
