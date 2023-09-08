@@ -103,7 +103,6 @@ shinyServer(function(input, output, session){
   
 
 
-###########################################DISTRIBUCION BINOMIAL####################################  
   
   
   ######################################DISTRIBUCION BINOMIAL########################################
@@ -558,6 +557,132 @@ output$carga <- function(){
             scroll_box(width = "450px", height = "350px")
 
 }
+
+
+###################################DISTRIBUCION BETHA########################################################################################
+
+
+sim_betha <-  reactive({
+  req(input$nsim_betha >= 10)
+  res_betha <- matrix(nrow = input$nbetha, ncol = input$nsim_betha)
+  for(j in 1:input$nsim_betha){
+    res_betha[, j] <- rbeta(input$nbetha,input$pbetha,input$qbetha)
+  }
+  colnames(res_betha) <- paste0("Simulacion_", 1:input$nsim_betha)
+  res_betha
+})
+
+#Tabla
+
+output$tb_betha <- function(){
+  res_betha <<- data.table(sim_betha())
+  
+  res_betha %>% 
+    kbl(booktabs = TRUE) %>%
+    kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+    #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+    row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+    scroll_box(width = "1000px", height = "320px")
+}
+
+#Boton descarga
+
+output$download_betha <- downloadHandler(
+  filename = function(){"Distribucion_Betha.xlsx"},
+  content = function(file){write_xlsx(as.data.frame(res_betha), path = file)}
+)
+
+
+#Grafico 1
+
+output$plot_betha1 <- renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))
+  
+  ggplot(sim_betha, aes(x = Media)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = input$pbetha/(input$pbetha+input$qbetha), sd =sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+
+#Probabilidad
+
+output$pest_betha1 <- renderUI({
+  sim_betha <- data.table(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))[, Marca := ifelse(Media < input$c_betha1, 1, 0)]
+  x <- unlist(sim_betha[,mean(Marca)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+
+#Probabilidad teorica
+
+output$pteo_betha1<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_betha1-(input$pbetha/(input$pbetha+input$qbetha)))/(sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha)))))))
+})
+
+#Grafico probabilidad 1
+
+output$plot_betha_prob1<-renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))
+  dat<-density(sim_betha$Media)
+  dat<-data.frame(Media=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = (input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Media<input$c_betha1,Media, input$c_betha1)), fill = "skyblue")
+  
+})
+
+##Suma
+
+output$plot_betha2 <- renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))
+  
+  ggplot(sim_betha, aes(x = Suma)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean =input$nbetha*(input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$nbetha*input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+
+
+#Probabilidad 2 simulada
+
+output$pest_betha2 <- renderUI({
+  sim_betha <- data.table(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))[, Suma := ifelse(Suma < input$c_betha2, 1, 0)]
+  x <- unlist(sim_betha[,mean(Suma)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+
+#Probabilidad 2 teorica
+
+output$pteo_betha2<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_betha2-(input$nbetha*(input$pbetha/(input$pbetha+input$qbetha))))/(sqrt((input$nbetha*(input$pbetha*input$qbetha))/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1))))))))
+})
+
+#Grafico 2
+
+output$plot_betha_prob2<-renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))
+  dat<-density(sim_betha$Suma)
+  dat<-data.frame(Suma=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = input$nbetha*(input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$nbetha*input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)))), col = "#1b98e0", size = 1.5) +
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Suma<input$c_betha2,Suma, input$c_betha2)), fill = "skyblue")
+  
+})
+
+
+
+
 
 # grafico DE LA DENSIDAD 
 output$plot_uni_1<-renderPlot({
