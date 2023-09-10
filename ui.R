@@ -212,7 +212,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        
                                        
                               ),
-                              tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Normall", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias normales"),
                                        br(),
                                        fluidRow(column(3, 

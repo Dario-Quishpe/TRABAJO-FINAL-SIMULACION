@@ -343,7 +343,7 @@ shinyServer(function(input, output, session){#######################Server######
   output$pest_norm1 <- renderUI({
     sim_norm <- data.table(Simulacion = 1:input$nsim_norm, Media = unname(colMeans(sim_norm())))[, Marca := ifelse(Media < input$c_norm1, 1, 0)]
     x <- unlist(sim_norm[,mean(Marca)])
-    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+    h4(withMathJax(sprintf("La probabilidad buscad es igual a: %.03f", x)))
   })
   
   output$pteo_exp1<- renderUI({
