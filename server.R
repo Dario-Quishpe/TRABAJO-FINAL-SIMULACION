@@ -702,9 +702,101 @@ shinyServer(function(input, output, session){#######################Server######
     
   })
 
-  
-  
-  
+########################## DISTRIBUCIÓN POISSON###############################################
+  sim_poisson <-  reactive({
+    req(input$nsim_poisson >= 10)
+    res_poisson <- matrix(nrow = input$npoisson, ncol = input$nsim_poisson)
+    for(j in 1:input$nsim_poisson){
+      res_poisson[, j] <- rpois(input$npoisson, input$lambdapoisson)
+    }
+    colnames(res_poisson) <- paste0("Simulacion_", 1:input$nsim_poisson)
+    res_poisson
+  })
+
+  output$tb_poisson <- function(){
+    res_poisson <<- data.table(sim_poisson())
+
+    res_poisson %>%
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
+      #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>%
+      row_spec(0, background = "#33639f", color = "#ffffff") %>%
+      scroll_box(width = "1000px", height = "320px")
+  }
+
+  output$download_poisson <- downloadHandler(
+    filename = function(){"Distribucion_Poisson.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res_poisson), path = file)}
+  )
+
+  output$plot_poisson1 <- renderPlot({
+    sim_poisson <- data.frame(Simulacion = 1:input$nsim_poisson, Media = unname(colMeans(sim_poisson())))
+
+    ggplot(sim_poisson, aes(x = Media)) +
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$lambdapoisson, sd = sqrt(input$lambdapoisson/input$npoisson)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())})
+
+  output$pest_poisson1 <- renderUI({
+    sim_poisson <- data.table(Simulacion = 1:input$nsim_poisson, Media = unname(colMeans(sim_poisson())))[, Marca := ifelse(Media < input$c_poisson1, 1, 0)]
+    x <- unlist(sim_poisson[,mean(Marca)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+
+  output$pteo_poisson1<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_poisson1-input$lambdapoisson)/(sqrt(input$lambdapoisson/input$npoisson))))))
+  })
+
+  output$plot_poisson_prob1<-renderPlot({
+    sim_poisson <- data.frame(Simulacion = 1:input$nsim_poisson, Media = unname(colMeans(sim_poisson())))
+    dat<-density(sim_poisson$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$lambdapoisson, sd = sqrt(input$lambdapoisson/input$npoisson)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_poisson1,Media, input$c_poisson1)), fill = "skyblue")
+
+  })
+
+  output$plot_poisson2 <- renderPlot({
+    sim_poisson <- data.frame(Simulacion = 1:input$nsim_poisson, Suma = unname(colSums(sim_poisson())))
+
+    ggplot(sim_poisson, aes(x = Suma)) +
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$npoisson*input$lambdapoisson, sd = sqrt(input$npoisson*input$lambdapoisson)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+  })
+
+  output$pest_poisson2 <- renderUI({
+    sim_poisson <- data.table(Simulacion = 1:input$nsim_poisson, Suma = unname(colSums(sim_poisson())))[, Suma := ifelse(Suma < input$c_poisson2, 1, 0)]
+    x <- unlist(sim_poisson[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+
+  output$pteo_poisson2<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_poisson2-input$npoisson*input$lambdapoisson)/(sqrt(input$lambdapoisson*input$npoisson))))))
+  })
+
+  output$plot_poisson_prob2<-renderPlot({
+    sim_poisson <- data.frame(Simulacion = 1:input$nsim_poisson, Suma = unname(colSums(sim_poisson())))
+    dat<-density(sim_poisson$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$npoisson*input$lambdapoisson, sd = sqrt(input$npoisson*input$lambdapoisson)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_poisson2,Suma, input$c_poisson2)), fill = "skyblue")
+
+  })
+
 ##############################################DISTRIBUCION GAMMA#############################################################
 
   sim_gam <-  reactive({
@@ -1704,8 +1796,8 @@ output$distribucion_estados<-renderHighchart({
   
   output$plot_cuantia_esperada<-renderHighchart({
     z<-eje2b2(input$b2nsim,input$b2nreclamo)
-    data <- data.frame(Reclamos = z$x, Cuantías = z$medias)
-    hchart(data,type="line",hcaes(x=Reclamos,y=Cuantías)) %>% 
+    data <- data.frame(Reclamos = z$x, Cuantias = z$medias)
+    hchart(data,type="line",hcaes(x=Reclamos,y=Cuantias)) %>% 
       hc_title(text = 'Cuantías esperadas',align="center",width="25") |> 
       hc_plotOptions(series = list(animation = FALSE)) |> 
       hc_add_theme(hc_theme_bloom())

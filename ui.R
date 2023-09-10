@@ -76,12 +76,69 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                               ),
                               tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias binomial negativa"),
-                                       br()
+                                       br(),
                               ),
                               tabPanel("Distribución Poisson", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias poisson"),
-                                       br()
-                              )
+                                       br(),
+                                       fluidRow(column(3,
+                                                       numericInput("lambdapoisson", "Media:", value = 0.5, min = 0.25, max = 12),
+                                                       numericInput("npoisson", "Número de variables:", value = 50, min = 10, max = 1000),
+                                                       numericInput("nsim_poisson", "Número de simulaciones:", value = 1000, min = 20, max = 2000)
+                                       ),
+                                       column(9,
+                                              fluidRow(
+                                                div(tableOutput("tb_poisson"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_poisson", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_poisson1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_poisson1", "Ingrese el valor de c:", value = 1, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_poisson1'),
+                                                uiOutput('pteo_poisson1')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_poisson_prob1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_poisson2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_poisson2", "Ingrese el valor de c:", value = 50, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_poisson2'),
+                                                uiOutput('pteo_poisson2')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_poisson_prob2", height = "500px")
+                                       ),
+                                       br(),
+                              ),
                    ),
                    navbarMenu("Teorema del Límite Central (Distribuciones Continuas)",
                               tabPanel("Distribución Exponencial", tags$style("h4 {color: #035FC6; font-family: roman}"),
@@ -212,7 +269,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        
                                        
                               ),
-                              tabPanel("Distribución Normall", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias normales"),
                                        br(),
                                        fluidRow(column(3, 
@@ -309,7 +366,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                                 uiOutput('pteo_pareto')
                                          )
                                        ),
-                                       br()
+                                       br(),
 
                     
                                 
@@ -923,4 +980,5 @@ sea inferior al 30% de la cuantía total de los reclamos en un día.")),
                               )
         )
 )
+
 
