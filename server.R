@@ -18,7 +18,8 @@ suppressWarnings(library(kableExtra))
 suppressWarnings(library(sparkline))
 suppressWarnings(library(htmlwidgets))
 suppressWarnings(library(shinyauthr))
-
+suppressWarnings(library(sads))
+suppressWarnings(library(caret))
 
 #getDependency('sparkline')
 options(dplyr.summarise.inform = FALSE)
