@@ -18,13 +18,28 @@ suppressWarnings(library(kableExtra))
 suppressWarnings(library(sparkline))
 suppressWarnings(library(htmlwidgets))
 suppressWarnings(library(shinyauthr))
-
-
+suppressWarnings(library(sads))
+suppressWarnings(library(caret))
+suppressWarnings(library(diagram))
 #getDependency('sparkline')
 options(dplyr.summarise.inform = FALSE)
 
 options(scipen = 999)
 dir.p <- getwd() # Directorio principal
+# CADENA DE MARKOV
+run.mc.f <- function( P, e_0,num.iters) {
+  
+  num.estados <- nrow(P)
+  estados     <- numeric(num.iters)
+  estados[1]    <- e_0
+  
+  for(t in 2:num.iters) {
+    
+    p  <- P[estados[t-1], ]  
+    estados[t] <-  which(rmultinom(1, 1, p) == 1)
+  }
+  return(estados)
+}
 
 
 
@@ -95,9 +110,150 @@ int_conf_trad<-function(muestra,alfa){
   ic_sup<-mean(muestra)+t*sqrt(var(x))/sqrt(n)
   return(list(ICI=ic_inf,ICS=ic_sup))
 }
+############################################FUNCION QUE DETERMINA EL KS################################
+#funcion paradeterminar el ks
+TestKS <- function(x, y){
+    vars <- data.frame(y,x)
+    vars_e <- subset(vars,subset=vars[,1]==1)
+    vars_f <- subset(vars,subset=vars[,1]==0)
+    ks <- suppressWarnings(ks.test(vars_e[,2],vars_f[,2],alternative="two.sided"))
+    ks <- round(as.numeric(ks$statistic),4)
+  return(ks)
+}
 
-shinyServer(function(input, output, session){
+shinyServer(function(input, output, session){#######################Server#####################################
 
+  
+############################################DISTRIBUCIONES DISCRETAS################################
+  
+
+
+  
+  
+  ######################################DISTRIBUCION BINOMIAL########################################
+  
+  sim_binom <-  reactive({
+    req(input$nsim_binom >= 10)
+    res_binom <- matrix(nrow = input$nbinom, ncol = input$nsim_binom)
+    for(j in 1:input$nsim_binom){
+      res_binom[, j] <- rbinom(input$nbinom,input$ensayos,input$pbinom)
+    }
+    colnames(res_binom) <- paste0("Simulacion_", 1:input$nsim_binom)
+    res_binom
+  })
+  
+  
+  output$tb_binom <- function(){
+    res_binom <<- data.table(sim_binom())
+    
+    res_binom %>% 
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+      #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+      row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+      scroll_box(width = "1000px", height = "320px")
+  }
+  
+  #Boton descarga
+  
+  output$download_binom <- downloadHandler(
+    filename = function(){"Distribucion_Binomial.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res_binom), path = file)}
+  )
+  
+  
+  output$plot_binom1 <- renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))
+    
+    ggplot(sim_binom, aes(x = Media)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$ensayos*input$pbinom, sd = sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  output$pest_binom1 <- renderUI({
+    sim_binom <- data.table(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))[, Marca := ifelse(Media < input$c_binom1, 1, 0)]
+    x <- unlist(sim_binom[,mean(Marca)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  output$pteo_binom1<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_binom1-input$ensayos*input$pbinom)/(sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom))))))
+  })
+  
+  ##Probabilidad 1
+  
+  output$plot_binom_prob1<-renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Media = unname(colMeans(sim_binom())))
+    dat<-density(sim_binom$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$ensayos*input$pbinom, sd = sqrt(input$ensayos*input$pbinom*(1-input$pbinom))/sqrt(input$nbinom)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_binom1,Media, input$c_binom1)), fill = "skyblue")
+    
+  })
+  
+  
+  ##Suma
+  
+  output$plot_binom2 <- renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))
+    
+    ggplot(sim_binom, aes(x = Suma)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean =input$nbinom*input$ensayos*input$pbinom, sd = sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom))), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  
+  #Probabilidad 2 simulada
+  
+  output$pest_binom2 <- renderUI({
+    sim_binom <- data.table(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))[, Suma := ifelse(Suma < input$c_binom2, 1, 0)]
+    x <- unlist(sim_binom[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  
+  output$pteo_binom2<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_binom2-input$nbinom*input$ensayos*input$pbinom)/(sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom)))))))
+  })
+  
+#Grafica
+  
+  output$plot_binom_prob2<-renderPlot({
+    sim_binom <- data.frame(Simulacion = 1:input$nsim_binom, Suma = unname(colSums(sim_binom())))
+    dat<-density(sim_binom$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = input$nbinom*input$ensayos*input$pbinom, sd = sqrt(input$nbinom*input$ensayos*input$pbinom*(1-input$pbinom))), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_binom2,Suma, input$c_binom2)), fill = "skyblue")
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+#############################################DISTRIBUCIONES CONTINUAS###############################  
+  
+  
   
 ##############################################DISTRIBUCION EXPONECIAL################################
   
@@ -395,6 +551,56 @@ shinyServer(function(input, output, session){
       geom_area(mapping = aes(x = ifelse(Suma<input$c_gam2,Suma, input$c_gam2)), fill = "skyblue")
     
   })
+  ##################################### DISTRIBUCION DE PARETO ####################################################################################################################
+# Simulaciones pareto  
+sim_pareto_<-  reactive({
+  req(input$nsim_pareto >= 10)
+  res_pareto <- matrix(nrow = input$npareto, ncol = input$nsim_pareto)
+  for(j in 1:input$nsim_pareto){
+    res_pareto[, j] <- rpareto(input$npareto, input$b_pareto,input$a_pareto)
+  }
+  colnames(res_pareto) <- paste0("Simulacion_", 1:input$nsim_pareto)
+  res_pareto
+})
+
+## Tablas con los resultados de la simulación_PAreto
+output$tb_pareto <- function(){
+  res_pareto <<- data.table(sim_pareto_())
+  
+  res_pareto %>% 
+    kbl(booktabs = TRUE) %>%
+    kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+    #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+    row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+    scroll_box(width = "1000px", height = "320px")
+}
+# Botón de descarga
+output$download_pareto <- downloadHandler(
+      filename = function(){"DistribuciondePareto.xlsx"},
+      content = function(file){write_xlsx(as.data.frame(res_pareto), path = file)}
+)
+# Gráfico que contrasta la densidad observada con la teórica
+output$plot_Pareto_ggplot = renderPlot({
+  sim_pareto <- data.frame(Simulacion = 1:input$nsim_pareto, Media = unname(colMeans(sim_pareto_())))
+  
+  ggplot(sim_pareto, aes(x = Media)) + 
+    geom_histogram(aes(y =..density..), breaks = seq((min(sim_pareto$Media) - 1), (max(sim_pareto$Media) + 1), by = 0.05), colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean((sim_pareto$Media)), sd = sd(sim_pareto$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+# Probabilidades estimadas y teóricas
+output$pest_pareto <- renderUI({
+      sim_pareto <- data.table(Simulacion = 1:input$nsim_pareto, Media = unname(colMeans(sim_pareto_())))[, Marca := ifelse(Media < input$c_pareto, 1, 0)]
+        x <- unlist(sim_pareto[,mean(Marca)])
+        h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+
+output$pteo_pareto <- renderUI({
+      h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", ppareto(input$c_pareto,input$b_pareto,input$a_pareto))))
+})
 
   ##################################### DISTRIBUCION UNIFORME######################################################################################################################  
   
@@ -470,6 +676,132 @@ output$carga <- function(){
             scroll_box(width = "450px", height = "350px")
 
 }
+
+
+###################################DISTRIBUCION BETHA########################################################################################
+
+
+sim_betha <-  reactive({
+  req(input$nsim_betha >= 10)
+  res_betha <- matrix(nrow = input$nbetha, ncol = input$nsim_betha)
+  for(j in 1:input$nsim_betha){
+    res_betha[, j] <- rbeta(input$nbetha,input$pbetha,input$qbetha)
+  }
+  colnames(res_betha) <- paste0("Simulacion_", 1:input$nsim_betha)
+  res_betha
+})
+
+#Tabla
+
+output$tb_betha <- function(){
+  res_betha <<- data.table(sim_betha())
+  
+  res_betha %>% 
+    kbl(booktabs = TRUE) %>%
+    kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+    #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+    row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+    scroll_box(width = "1000px", height = "320px")
+}
+
+#Boton descarga
+
+output$download_betha <- downloadHandler(
+  filename = function(){"Distribucion_Betha.xlsx"},
+  content = function(file){write_xlsx(as.data.frame(res_betha), path = file)}
+)
+
+
+#Grafico 1
+
+output$plot_betha1 <- renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))
+  
+  ggplot(sim_betha, aes(x = Media)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = input$pbetha/(input$pbetha+input$qbetha), sd =sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+
+#Probabilidad
+
+output$pest_betha1 <- renderUI({
+  sim_betha <- data.table(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))[, Marca := ifelse(Media < input$c_betha1, 1, 0)]
+  x <- unlist(sim_betha[,mean(Marca)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+
+#Probabilidad teorica
+
+output$pteo_betha1<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_betha1-(input$pbetha/(input$pbetha+input$qbetha)))/(sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha)))))))
+})
+
+#Grafico probabilidad 1
+
+output$plot_betha_prob1<-renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Media = unname(colMeans(sim_betha())))
+  dat<-density(sim_betha$Media)
+  dat<-data.frame(Media=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = (input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)*input$nbetha))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Media<input$c_betha1,Media, input$c_betha1)), fill = "skyblue")
+  
+})
+
+##Suma
+
+output$plot_betha2 <- renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))
+  
+  ggplot(sim_betha, aes(x = Suma)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean =input$nbetha*(input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$nbetha*input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)))), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+
+
+#Probabilidad 2 simulada
+
+output$pest_betha2 <- renderUI({
+  sim_betha <- data.table(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))[, Suma := ifelse(Suma < input$c_betha2, 1, 0)]
+  x <- unlist(sim_betha[,mean(Suma)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+
+#Probabilidad 2 teorica
+
+output$pteo_betha2<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_betha2-(input$nbetha*(input$pbetha/(input$pbetha+input$qbetha))))/(sqrt((input$nbetha*(input$pbetha*input$qbetha))/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1))))))))
+})
+
+#Grafico 2
+
+output$plot_betha_prob2<-renderPlot({
+  sim_betha <- data.frame(Simulacion = 1:input$nsim_betha, Suma = unname(colSums(sim_betha())))
+  dat<-density(sim_betha$Suma)
+  dat<-data.frame(Suma=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = input$nbetha*(input$pbetha/(input$pbetha+input$qbetha)), sd = sqrt((input$nbetha*input$pbetha*input$qbetha)/((input$pbetha+input$qbetha)^2*(input$pbetha+input$qbetha+1)))), col = "#1b98e0", size = 1.5) +
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Suma<input$c_betha2,Suma, input$c_betha2)), fill = "skyblue")
+  
+})
+
+
+
+
 
 # grafico DE LA DENSIDAD 
 output$plot_uni_1<-renderPlot({
@@ -650,13 +982,112 @@ output$plot_chi_prob2<-renderPlot({
   
 })
 
+##############################KS#####################################
+# Carga de archivo Excel
+output$archivoks <- renderTable(input$file2)
+
+output$cargaks <- function(){
+      inFile <- input$file2
+
+      if(is.null(inFile))
+            return(NULL)
+      file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+      res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+
+      res %>%
+            kbl(booktabs = TRUE) %>%
+            kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
+            row_spec(0, background = "#33639f", color = "#ffffff") %>%
+            scroll_box(width = "450px", height = "350px")
+
+}
+
+#Grafica de las distribuciones acumuladas ks
+output$grafica_distribuciones <- renderPlot({   
+  
+  inFile <- input$file2
+  
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  
+  # Comparativa de funciones de distribución
+  buenos <- ecdf(res %>% dplyr::filter(VarDep == 0) %>% pull(colnames(res)[eleccion]))
+  malos <- ecdf(res %>% dplyr::filter(VarDep == 1) %>% pull(colnames(res)[eleccion]))
+  
+  grid_var <- unique(res %>% pull(colnames(res)[eleccion]))
+  prob_acumulada_ecdf_b <- buenos(v = grid_var)
+  prob_acumulada_ecdf_m <- malos(v = grid_var)
+  
+  df_ecdf <- data.frame(var = grid_var, buenos = prob_acumulada_ecdf_b, malos = prob_acumulada_ecdf_m) %>%
+    pivot_longer(cols = c(buenos, malos), names_to = "Marca", values_to = "ecdf")
+  
+  grafico_ecdf <- ggplot(data = df_ecdf, aes(x = var, y = ecdf, color = Marca)) +
+    geom_line(size = 1) +
+    scale_color_manual(values = c("gray60", "orangered1")) +
+    labs(color = "Marca", y = "Probabilidad acumulada", x = colnames(res)[eleccion]) +
+    theme_bw() +
+    theme(legend.position = "bottom", plot.title = element_text(size = 15))
+  
+  #grafico_ecdf
+  abs_dif <-  abs(prob_acumulada_ecdf_b - prob_acumulada_ecdf_m)
+  distancia_ks <- max(abs_dif)
+  paste("Distancia Kolmogorov–Smirnov:", distancia_ks)
+  indice_ks <- which.max(abs_dif)
+  grafico_ecdf + 
+    geom_segment(aes(x = grid_var[indice_ks], xend = grid_var[indice_ks],
+                     y = prob_acumulada_ecdf_b[indice_ks], yend = prob_acumulada_ecdf_m[indice_ks]),
+                 arrow = arrow(ends = "both", length = unit(0.2,"cm")), color = "black")
+
+})
+### GRafica comparativa de las densidades
+output$grafica_densidades<-renderHighchart({
+  inFile <- input$file2
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  
+  vars <- data.frame(res$VarDep,res[,eleccion])
+  vars_e <- subset(vars,subset=vars[,1]==1)
+  vars_f <- subset(vars,subset=vars[,1]==0)
+  hc <- hchart(
+    density(vars_e[,2]), type = "area", 
+    color = "steelblue", name = "bueno"
+  ) %>%
+    hc_add_series(
+      density(vars_f[,2]), type = "area",
+      color = "#B71C1C", 
+      name = "malo") |> 
+        hc_title(text = "Comparacion de densidades") %>%
+        hc_add_theme(hc_theme_economist())
+  
+})
+
+##  infoKS
+output$info_boxKs <- renderInfoBox({
+  inFile <- input$file2
+  
+  if(is.null(inFile))
+    return(NULL)
+  file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+  res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+  eleccion<-as.integer(input$variable)
+  ks<-TestKS(res[,eleccion],res$VarDep)
+  infoBox(paste("El ks calculado de la variable ",colnames(res[,eleccion])," es =",ks),  icon = icon("list", lib = "glyphicon"),
+          color = "yellow", fill = TRUE)
+})
 
 
 ##############################BOOTSTRAP#####################################
 
 # Carga de archivo Excel
 
-  #output$archivoboot <- renderTable(input$fileboot)
+  output$archivoboot <- renderTable(input$fileboot)
+
   output$cargaboot <- function(){
     inFile <- input$fileboot
   
@@ -664,7 +1095,6 @@ output$plot_chi_prob2<-renderPlot({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-  
     res %>%
       kbl(booktabs = TRUE) %>%
       kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
@@ -678,6 +1108,7 @@ output$plot_chi_prob2<-renderPlot({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-unlist(res)
     hchart(res) %>% 
       hc_title(text = "Histograma",align="center",width="25") |> 
       hc_plotOptions(series = list(animation = FALSE)) |> 
@@ -690,7 +1121,8 @@ output$plot_chi_prob2<-renderPlot({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-    x<-int_conf_trad(as.vector(res),1-input$nivel_confboot)
+    res<-unlist(res)
+    x<-int_conf_trad(res,1-input$nivel_confboot/100)
     a<-x$ICI
     b<-x$ICS
     h4(withMathJax(sprintf("Intervalo de confianza tradicional: [%.02f,%.02f]",a,b )))
@@ -703,7 +1135,8 @@ output$plot_chi_prob2<-renderPlot({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-    x<-int_conf_boot(as.vector(res),1-input$nivel_confboot)
+    res<-unlist(res)
+    x<-int_conf_boot(res,1-input$nivel_confboot/100)
     a<-x$ICI
     b<-x$ICS
     h4(withMathJax(sprintf("Intervalo de confianza bootstrap: [%.02f,%.02f]",a,b )))
@@ -720,7 +1153,218 @@ output$plot_chi_prob2<-renderPlot({
            panel.first=grid())
   })
 
+  ##############################EJERCICIOS PROCESOS EN TIEMPO DISCRETO#####################################
+output$tabla_grafo <- function(){
+  library(diagram)
+  P<-data.frame(
+    stringsAsFactors = FALSE,
+    i = c("E", "C"),
+    E = c("0,7", "0,35"),
+    C = c("0,3", "0,65")
+  )
+  kbl(P) %>% 
+    kable_styling(position = "center") %>% 
+    row_spec(0, bold = TRUE, background = "#66F681")|>
+    kable_classic("striped") 
   
+  
+}
+##grafo
+output$plot_grafo<-renderPlot({
+  P<-data.frame(
+    stringsAsFactors = FALSE,
+    i = c("E", "C"),
+    E = c("0,7", "0,35"),
+    C = c("0,3", "0,65")
+  )
+  kbl(P) %>% 
+    kable_styling(position = "center") %>% 
+    row_spec(0, bold = TRUE, background = "#66F681")|>
+    kable_classic("striped")
+  
+  graf<-matrix(c(0.7,0.3,
+                 0.35,0.65
+  ),nrow=2,ncol=2,byrow=TRUE)
+  
+  
+  plotmat(t(graf),name=c('E','C'),arr.length=.5,
+          arr.width=.4,
+          self.cex = .6,
+          self.shifty = -.01,
+          self.shiftx = .14,lwd = 1, box.lwd = 2, 
+          cex.txt = 0.8, 
+          box.size = 0.1, 
+          box.type = "circle", 
+          box.prop = 1,
+          box.col = "light blue",relsize = 0.8,
+          )
+  
+})
+###simulacion de cadenas y obtencion del comportamiento de la distribucion de probabilidad
+output$distribucion_estados<-renderHighchart({
+  
+    P <- t(matrix(c( 0.7, 0.3, 0.35, 0.65), nrow=2, ncol=2))
+    num.cadenas     <- 6000
+    num.iterations <- 500
+    
+    estados  <- matrix(NA, ncol=num.cadenas, nrow=num.iterations)
+    
+    # simular cada una de las cadenas y las guardamos en un vector
+    for(c in seq_len(num.cadenas)){
+      estados[,c] <- run.mc.f(P,1,num.iterations)
+    }
+    ###################################### Contamos el numero de cadenas que terminan en cada estado
+    contar_ocurrencias <- function(fila) {
+      contador <- c(0, 0)
+      
+      for (elemento in fila) {
+        if (elemento == 1) {
+          contador[1] <- contador[1] + 1
+        } else if (elemento == 2) {
+          contador[2] <- contador[2] + 1
+        } 
+      }
+      return(contador)
+    }
+    #######################################
+    pi_n <- matrix(NA, ncol=num.iterations, nrow=2)
+    
+    for(c in seq_len(num.iterations)){
+      pi_n[,c] <- contar_ocurrencias(estados[c,])/num.cadenas
+    }
+    #######################################
+    
+    respi_1<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[1,])
+    respi_2<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[2,])
+    respi_1<-respi_1 |> mutate(banderita="pi_E")
+    respi_2<-respi_2 |> mutate(banderita="pi_C")
+    consolidada<-merge(x = respi_1, y = respi_2, all = TRUE)
+    
+    hchart(consolidada, 
+           type = "line", 
+           hcaes(x = Tiempo, 
+                 y = Valores_pi,group=banderita)) |> 
+      hc_title(text = "COMPORTAMIENTO DE LA DISTRIBUCION DE PROBABILIDAD DE LOS ESTADOS E Y C",
+               style = list(fontWeight = "bold", fontSize = "25px"),
+               align = "center")
+    })
+
+  ####Tablitas para ele ejercicio discreto 2
+  
+  output$P <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios = c("0.7", "0","0.7"),
+      Cont_media = c("0.2", "0.7",0.1),
+      Cont_alta = c("0.1", "0,3","0.2")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+    
+  }
+  
+  output$D_n <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios= c("(λ1)^n", "0","0"),
+      Cont_Media= c("0", "(λ2)^n",0),
+      COnt_Alta = c("0", "0","(λ3)^n")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+  }
+  output$c_l_c <- function(){
+    library(diagram)
+    P<-data.frame(
+      stringsAsFactors = FALSE,
+      Limpios= c("21/47", "21/47","21/47"),
+      Cont_Media= c("17/47", "17/47","17/47"),
+      COnt_Alta = c("(9/47", "9/47","9/47")
+    )
+    kbl(P) %>% 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#66F681")|>
+      kable_classic("striped") 
+    
+  }
+### Resultado ejercicio 2discreto'
+  output$RES_2<-renderHighchart({
+    run.mc.f <- function( P, e_0,num.iters) {
+      
+      num.estados <- nrow(P)
+      estados     <- numeric(num.iters)
+      estados[1]    <- e_0
+      
+      for(t in 2:num.iters) {
+        
+        p  <- P[estados[t-1], ]  
+        estados[t] <-  which(rmultinom(1, 1, p) == 1)
+      }
+      return(estados)
+    }
+    
+    P <- t(matrix(c( 0.7, 0.2, 0.1, 0.0, 0.7, 0.3, 0.7, 0.1, 0.2), nrow=3, ncol=3))
+    num.cadenas     <- 1500
+    num.iterations <- 500
+    
+    estados  <- matrix(NA, ncol=num.cadenas, nrow=num.iterations)
+    
+    # simular cada una de las cadenas y las fuardamos en un vector
+    for(c in seq_len(num.cadenas)){
+      estados[,c] <- run.mc.f(P,1,num.iterations)
+    }
+    ###################################### Contamos el numero de cadenas que terminan en cada estado
+    contar_ocurrencias <- function(fila) {
+      contador <- c(0, 0, 0)
+      
+      for (elemento in fila) {
+        if (elemento == 1) {
+          contador[1] <- contador[1] + 1
+        } else if (elemento == 2) {
+          contador[2] <- contador[2] + 1
+        } else if (elemento == 3) {
+          contador[3] <- contador[3] + 1
+        }
+      }
+      return(contador)
+    }
+    #######################################
+    pi_n <- matrix(NA, ncol=num.iterations, nrow=3)
+    
+    for(c in seq_len(num.iterations)){
+      pi_n[,c] <- contar_ocurrencias(estados[c,])/num.cadenas
+    }
+    #######################################
+    
+    respi_1<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[1,])
+    respi_2<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[2,])
+    respi_3<-data.frame(Tiempo=c(1:num.iterations),Valores_pi=pi_n[3,])
+    respi_1<-respi_1 |> mutate(banderita="pi_1")
+    respi_2<-respi_2 |> mutate(banderita="pi_2")
+    respi_3<-respi_3 |> mutate(banderita="pi_3")
+    consolidada1<-merge(x = respi_1, y = respi_2, all = TRUE)
+    consolidada<-merge(x = consolidada1, y = respi_3, all = TRUE)
+    
+    hchart(consolidada, 
+           type = "line", 
+           hcaes(x = Tiempo, 
+                 y = Valores_pi,group=banderita)) |> 
+      hc_title(text = "COMPORTAMIENTO DE LA DISTRIBUCION DE PROBABILIDAD DE LOS ESTADOS 1,2 y 3",
+               style = list(fontWeight = "bold", fontSize = "15px"),
+               align = "center")
+    
+  })
+
+
+      
 })
 
 
