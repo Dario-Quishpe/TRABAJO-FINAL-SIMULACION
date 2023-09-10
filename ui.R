@@ -212,9 +212,67 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                        
                                        
                               ),
-                              tabPanel("Distribución Normal", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial negativa"),
-                                       br()
+                              tabPanel("Distribución Normall", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                                       h4("Simulación de variables aleatorias normales"),
+                                       br(),
+                                       fluidRow(column(3, 
+                                                       numericInput("m_norm", "Media:", value = 0, min = 0, max = 12),
+                                                       numericInput("sd_norm", "Varianza:", value = 1, min = 0, max = 10),
+                                                       numericInput("nnorm", "Número de variables:", value = 50, min = 10, max = 1000),
+                                                       numericInput("nsim_norm", "Número de simulaciones:", value = 1000, min = 20, max = 2000)
+                                       ),
+                                       column(9, 
+                                              fluidRow(
+                                                div(tableOutput("tb_norm"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_norm", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_norm1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_norm1", "Ingrese el valor de c:", value = 1, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_norm1'),
+                                                uiOutput('pteo_norm1')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_norm_prob1", height = "500px")
+                                       ),
+                                       br(),
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_norm2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_norm2", "Ingrese el valor de c:", value = 50, min = 0, max = 100)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_norm2'),
+                                                uiOutput('pteo_norm2')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_norm_prob2", height = "500px")
+                                       ),
+                                       br(),
                               ),
                               tabPanel("Distribución de Pareto", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias (PARETO)"),
