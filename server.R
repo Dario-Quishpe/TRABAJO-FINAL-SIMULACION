@@ -20,7 +20,7 @@ suppressWarnings(library(htmlwidgets))
 suppressWarnings(library(shinyauthr))
 suppressWarnings(library(sads))
 suppressWarnings(library(caret))
-
+suppressWarnings(library(diagram))
 #getDependency('sparkline')
 options(dplyr.summarise.inform = FALSE)
 
