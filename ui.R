@@ -510,7 +510,7 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                             ),
                             
                    ),
-                   navbarMenu("Procesos Estocásticos",
+                   navbarMenu("Procesos Estocásticos (tiempo discreto)",
                               tabPanel("Cadenas en tiempo discreto",
                                        h1("Cadenas en tiempo discreto"),
                                        h2(strong("Ejercicio1: Clientes en una empresa:")),
@@ -638,23 +638,231 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                       
                                       
                               ),
-                              tabPanel("Cadenas en tiempo continuo",
-                                       h4("Procesos de Nacimiento y Muerte"),
-                                       br(),
-                                       fluidRow(
-                                             column(4,
-                                                    sliderInput("lambda", "Intensidad de nacimientos:", value = 3, min = 1, max = 10),
-                                                    sliderInput("mu", "Intensidad de fallecimientos:", value = 4, min = 1, max = 10),
-                                                    sliderInput("njumps", "Número de saltos del proceso:", value = 10, min = 1, max = 50)
-                                                    ),
-                                             column(8,
-                                                    fluidRow(
-                                                          plotOutput("plot_proceso", height = "500px")
-                                                    )
-                                                    )
+                   ),
+                              
+                  navbarMenu("Procesos Estocásticos (tiempo continuo)",
+                                            tabPanel("Proceso de Nacimiento y Muerte",
+                                              
+                                                           h3(strong("Sean las siguientes tasas: ")),
+                                                           br(),
+                                                           h4(" Tasa de Nacimientos: $$λ_n = 3n+2 , ∀ n≥ 0$$"),
+                                                           br(),
+                                                           h4(" Tasa de Falleciemitos: $$μ_n = 4n , ∀ n≥ 1$$ "),
+                                                           br(),
+                                                           h3(strong("SIMULEMOS LA TRAYECTORIA DEL PROCESO")),
+                                                           br(),
+                                                           fluidRow(
+                                                             column(4,
+                                                                    sliderInput("tiempo1", "Tiempo:", value = 1, min = 0.5, max = 3)
+                                                                    
+                                                             ),
+                                                             column(8,
+                                                                    fluidRow(
+                                                                      box(highchartOutput("plot_proceso_NM",height = 400), width = 12)
+                                                                    )
+                                                             ),
+                                                             
+                                                             
+                                                           ),
+                                                  br(),
+                                                  
+                                              
+                                                           h4(strong("La condición necesaria para la existencia de la distribución estacionaria es:")),
+                                                           br(),
+                                                           h4("$$\\sum_{n=0}^{\\infty}\\frac{\\lambda_0,...,\\lambda_n-1}{\\mu_1,...,\\mu_n}<\\infty$$"),
+                                                           br(),
+                                                           h4("Entonces, para este caso en particular tenemos: $$\\sum_{n=0}^{\\infty}\\frac{2*5*...*(3n-1)}{4^{n}*n!}$$"),
+                                                           br(),
+                                                           h4("Ahora como: $$2*5*...*(3n-1)<3*6*....*3n = 3^{n}*n!$$ Entonces, tenemos: $$L=\\sum_{n=0}^{\\infty}\\frac{\\lambda_0,...,\\lambda_n-1}{\\mu_1,...,\\mu_n}< \\sum_{n=0}^{\\infty}\\frac{3^{n}*n!}{4^{n}*n!}=\\sum_{n=0}^{\\infty}(\\frac{3}{4})^{n}=\\frac{\\frac{3}{4}}{1-\\frac{3}{4}}<\\infty$$ Es decir, la serie converge con lo cual 
+                                concluimos que el proceso tiene una distribución estacionaria. $$Pi_0=\\frac{1}{1+L} , Pi_n=\\frac{2*5*...*3n-1}{4^{n}n!(1+L)}$$"),
+                                                           br(),
+                                                           h3(strong("SIMULEMOS LA DISTRIBUCIÓN ESTACIONARIA")),
+                                                           br(),
+                                                           fluidRow(
+                                                             column(4,numericInput("ns1","Seleccione el número de simulaciones a generar",value=100,min=2,max=1000)
+                                                                    #numericInput("Tde","Tiempo",value=1,min=0.5,max=3)
+                                                                    
+                                                             ),
+                                                             column(4,
+                                                                    sliderInput("Tde", "Tiempo:", value = 1, min = 0.1, max = 2)
+                                                                    
+                                                             ),
+                                                             column(7,"Resultados obtenidos",
+                                                                    div(tableOutput("dst1")),
+                                                                    br(),
+                                                                    downloadButton("download_dst1", "Descargar Simulaciones")
+                                                                    
+                                                             )
+                                                           ),
+                                                           h3(strong("EVOLUCIÓN DE LA DISTRIBUCIÓN ESTACIONARIA")),
+                                                           br(),
+                                                           
+                                                           
+                                                           column(4,numericInput("est","Seleccione el estado",value=2,min=0,max=13),
+                                                                  # numericInput("Tde1","Tiempo",value=0.1,min=0.1,max=2),
+                                                                  numericInput("nsd","Seleccione el número de simulaciones a generar",value=100,min=2,max=1000)
+                                                           ),
+                                                           column(4,
+                                                                  sliderInput("Tde1", "Tiempo:", value = 1, min = 0.1, max = 2)
+                                                                  
+                                                           ),
+                                                           
+                                                           column(8,
+                                                                  fluidRow(
+                                                                    box(highchartOutput("plot_distestacionaria",height = 400), width = 12)
+                                                                  )
+                                                           ),
+                                                  br(),
+                                                  
+                                                  
+                                                  
                                        ),
+                                       
+                                       
+                                       tabPanel("Compañía de Seguros", 
+                                                
+                                                           h4("El número de reclamos diarios (reporte de siniestros) a una compañía
+de seguros se modeliza mediante un proceso de Poisson con tasa λ = 6. Por otro
+lado, la cuantía de cada reclamo sigue una distribución normal N(600, 32000), y dichas
+cuantías son independientes unas de otras."),
+                                                           fluidRow(
+                                                             h4(strong("a) Estime mediante simulación la probabilidad de que en un período de 2 días la cuantía
+total de los reclamos sea inferior a 10000 dólares.")),
+                                                             h4("Realizaremos el gráfico del Proceso con respecto al número de días"),
+                                                             column(4,
+                                                                    sliderInput("ndia", "Número de días:", value = 2, min = 1, max = 365)
+                                                                    
+                                                             ),
+                                                             column(8,
+                                                                    fluidRow(
+                                                                      box(highchartOutput("plot_proceso_dia",height = 400), width = 12)
+                                                                    )
+                                                             ),
+                                                             br(),
+                                                             h4("Realizaremos el gráfico del Proceso con respecto al número de reclamos"),
+                                                             column(4,
+                                                                    sliderInput("nreclamo", "Número de reclamos:", value = 10, min = 1, max = 20)
+                                                                    
+                                                             ),
+                                                             column(8,
+                                                                    fluidRow(
+                                                                      box(highchartOutput("plot_proceso_reclamo",height = 400), width = 12)
+                                                                    )
+                                                             ),
+                                                             br(),
+                                                             h4("Estimamos la probabilidad para el periodo de días y una cuantia de total de reclamos ingresada por el usuario. (Por defecto será 2 días y $10000)"),
+                                                             fluidRow(column(3, 
+                                                                             numericInput("ansim", "Número de simulaciones", value=1000, min=1,max=1000),
+                                                                             numericInput("andia", "Periodo de días:", value = 2, min = 2, max = 30),
+                                                                             numericInput('acuantia',"Cuantia total:", value=10000,min=100,max=100000)
+                                                             ),
+                                                             column(9,
+                                                                    h4("$$P(TReclamos < TCuantia)$$"),
+                                                                    uiOutput('proba')
+                                                             )
+                                                             )
+                                                           ),
+                                                  br(),
+                                                
+                                                           h4("b) El número de reclamos diarios (reporte de siniestros) a una compañía
+de seguros se modeliza mediante un proceso de Poisson con tasa λ = 6. Por otro
+lado, la cuantía de cada reclamo sigue una distribución normal N(600, 32000), y dichas
+cuantías son independientes unas de otras."),
+                                                           br(),
+                                                           h4(strong("1. La probabilidad de que en los próximos 9 reclamos, al menos 2 correspondan a
+                         accidentes de tránsito")),
+                                                           fluidRow(h4("Graficaremos la función de densidad para la cantidad de próximos reclamos y reclamos de accidentes de tránsito ingresados por el usuario (Por defecto será 9 reclamos y al menos 2 accidentes de tránsito). Y con esto se calculará la probabilidad"),
+                                                                    column(4,
+                                                                           numericInput("b1nsim","Número de simulaciones",value=100,min=1,max=10000),
+                                                                           numericInput("b1preclamo", "Número de reclamos:", value = 9, min = 1, max = 20),
+                                                                           numericInput("b1atrans","Número mínimo de accidentes de tránsito:",value=2,min=1,max=20)
+                                                                    ),
+                                                                    column(8,
+                                                                           fluidRow(
+                                                                             plotOutput("plot_b1",height = 400)
+                                                                           )
+                                                                    )
+                                                           ),
+                                                           fluidRow(
+                                                             column(4,h4("$$P(NReclamos \\geq NAtr)$$")),
+                                                             column(8, uiOutput('probb1'))
+                                                           ),
+                                                           br(),
+                                                           h4(strong("2. La cuantía total esperada para los próximos 12 reclamos.")),
+                                                           fluidRow(h4("Graficaremos la evolución de la cuantía esperada según los reclamos. El usuario podrá elegir para cuantos reclamos quiere obtener el valor de la cuantía total esperada(Por defecto 12 reclamos)"),
+                                                                    column(4,
+                                                                           numericInput("b2nsim","Número de simulaciones",value=1000,min=1,max=10000),
+                                                                           numericInput("b2nreclamo", "Número de reclamos:", value = 12, min = 1, max = 30)
+                                                                    ),
+                                                                    column(8,
+                                                                           fluidRow(
+                                                                             box(highchartOutput("plot_cuantia_esperada",height = 400), width = 12)
+                                                                           )
+                                                                    )
+                                                           ),
+                                                           fluidRow(
+                                                             column(8, uiOutput('cuantiaespb2'))
+                                                           ),
+                                                           br(),
+                                                           h4(strong("3. La probabilidad de que la cuantía total de los reclamos por accidentes de tránsito
+sea inferior al 30% de la cuantía total de los reclamos en un día.")),
+                                                           fluidRow(h4("El usuario podrá elegir el porcentaje (Por defecto 30%) y el número de días (Por defecto 1 día)"),
+                                                                    column(4,
+                                                                           numericInput("b23nsim","Número de simulaciones:",value = 100,min=1,max=1000),
+                                                                           numericInput("b2porc","Porcentaje",value=0.30,min=0.1,max=1),
+                                                                           numericInput("b23dia","Día",value=1,min=1,max=30)
+                                                                    ),
+                                                                    column(8, uiOutput('prob2b3'))
+                                                           ),
+                                                  br(),
+                                                  
+                                                           h4("c) Suponga que la compañía aseguradora cuentan con un capital inicial acumulado que
+                               500000 dólares y que por cada reclamo cobra un valor por concepto de deducible de
+                               80 dólares."),
+                                                           br(),
+                                                           h4(strong("1.¿Cuál sería la distribución del estado de cuentas al final del mes (30 días)?")),
+                                                           fluidRow(h4("Graficaremos la función de densidad para la cantidad de días (Por defecto será 30 días)"),
+                                                                    column(4,
+                                                                           numericInput("cnumsim","Número de simulaciones",value=1000,min=1,max=10000),
+                                                                           numericInput("cnumdia","Número de días",value=30,min=2,max=360)
+                                                                    ),
+                                                                    column(8,
+                                                                           fluidRow(
+                                                                             box(highchartOutput("plot_dist_mes",height = 400), width = 12)
+                                                                           )
+                                                                    ),
+                                                                    column(8,
+                                                                           fluidRow(
+                                                                             plotOutput("plot_ecdf",height = 500)
+                                                                           )
+                                                                    ),
+                                                                    br(),
+                                                                    fluidRow(
+                                                                      column(4,uiOutput('prueba_ks'))
+                                                                    )
+                                                                    
+                                                           ),
+                                                           br(),
+                                                           h4(strong("2.Estime la probabilidad de bancarrota en un período de 12 meses.")),
+                                                           fluidRow(h4("Calcularemos la probabilidad de bancarrota en el periodo de días que selecciona el usuario (Por defecto 360 dias, 12 meses)"),
+                                                                    column(4,
+                                                                           numericInput("c2nsim","Número de simulaciones",value=1000,min=1,max=10000),
+                                                                           numericInput("c2ndia","Número de días",value=360,min=2,max=720)
+                                                                    ),
+                                                                    column(8,uiOutput('prob2c')),
+                                                                    column(8,
+                                                                           fluidRow(
+                                                                             plotOutput("plot_bc2",height = 400)
+                                                                           )
+                                                                    )
+                                                           ),
+                                                  br(),
+                                                  
+                                                  
+                                       )
+                                       
                               )
                               )
         )
 )
-)
+

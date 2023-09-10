@@ -121,6 +121,258 @@ TestKS <- function(x, y){
   return(ks)
 }
 
+
+
+
+
+################################################PROCESOS ESTOCASTICOS CONTINUOS###############
+###############################################################EJERCICIO 1#########################
+
+
+Sim_NM <- function(T_end){
+  Z <- c()
+  n <- c()
+  Zaux<-c()
+  Z_type <- c()
+  n[1] <- 0
+  Z[1] <- 0
+  Zaux[1]<-0
+  Z_type[1] <- 1
+  i<-2
+  j<-1
+  while (Zaux[j] < T_end){
+    if (rev(n)[1] > 0){
+      Zaux[j+1] <- Zaux[j]+rexp(1, rate=3*(j-1)+2+4*(j-1))
+      if(Zaux[j+1]<T_end){
+        Z_type[j] <- sample(c(-1,1), size=1, prob=c(4*(j-1)/(3*(j-1)+2+4*(j-1)), (3*(j-1)+2)/(3*(j-1)+2+4*(j-1)))) 
+        n[i] <- n[i-1]
+        n[i+1]<-n[i-1]+Z_type[j]
+        Z[i]<-Zaux[j+1]
+        Z[i+1]<-Z[i]
+      }
+    }
+    else {
+      Zaux[j+1] <- Zaux[j]+rexp(1, rate=3*(j-1)+2)
+      if(Zaux[j+1]<T_end){
+        Z_type[j] <- 1
+        n[i] <- n[i-1]
+        n[i+1]<-n[i-1]+Z_type[j]
+        Z[i]<-Zaux[j+1]
+        Z[i+1]<-Z[i]
+      }
+      
+    }
+    j<-j+1
+    i<-i+2
+  }
+  if(length(n)==1&length(Z)==1){
+    n<-numeric(2)
+    Z<-numeric(2)
+  }
+  return(list(Z=Z[-length(Z)], n=n[-length(n)],Z1=Zaux[-length(Zaux)]))
+}
+
+##############################################Ej1 Distribucion Estacionaria################################################
+
+Dist_Esta<-function(ns1,T_end){
+  x<-numeric(ns1)
+  for(i in 1:ns1){
+    r<-Sim_NM(T_end)
+    w<-r$n
+    x[i]<-w[length(w)]
+  }
+  prob<-numeric(max(x)+1)
+  prob[1]<-mean(x==0)
+  for(j in 1:max(x)){
+    prob[j+1]<-mean(x==(j))
+  }
+  Pi <- 0:max(x)
+  return(data.table(Pi,prob))
+  
+}
+
+De_Tiempo<-function(est,T_end,nsd){
+  proba2<-numeric(length(seq(0.1,T_end,by=0.1)))
+  for(i in seq(0.1,T_end,by=0.1)){
+    x<-numeric(nsd)
+    for(j in 1:nsd){ 
+      res<-Sim_NM(i)
+      w<-res$n
+      x[j]<-w[length(w)]
+      
+    }
+    proba2[10*i]<-mean(x==est)
+  }
+  return(proba2) 
+}
+
+
+
+################################################################EJERCICIO 2 A###############################################
+##FUNCIONES
+#Devuelve la cantidad de reclamos al dia t
+Poisson_dia <- function(lambda, T_end){
+  Z <- c()
+  n <- c()
+  Zaux<-c()
+  Z[1] <- 0
+  n[1] <- 0
+  Zaux[1] <- 0
+  i=2
+  j=1
+  while (Zaux[j] < T_end){
+    Zaux[j+1]<- Zaux[j]+rexp(1, rate=lambda)
+    if (Zaux[j+1]<T_end) {
+      n[i] <-n[i-1]
+      n[i+1] <- n[i] + 1
+      Z[i] <-Zaux[j+1]
+      Z[i+1]<-Z[i]
+    }
+    i<-i+2
+    j<-j+1
+  }
+  return(list(Z=Z[-length(Z)], n=n[-length(n)],Z1=Zaux[-length(Zaux)]))
+}
+
+#Devuelve la cantidad de reclamos al reclamo n
+Poisson_reclamo <- function(lambda, N_end){
+  Z <- c()
+  n <- c()
+  Zaux<-c()
+  Z[1] <- 0
+  n[1] <- 0
+  Zaux[1] <- 0
+  i=2
+  j=1
+  while (n[i-1] < N_end){
+    n[i]<-n[i-1]
+    n[i+1]<-n[i]+1
+    Zaux[j+1]<- Zaux[j]+rexp(1, rate=lambda)
+    Z[i] <-Zaux[j+1]
+    Z[i+1]<-Z[i]
+    i<-i+2
+    j<-j+1
+    
+  }
+  n[i]<-n[i-1]
+  Zaux[j+1]<- Zaux[j]+rexp(1, rate=lambda)
+  Z[i] <-Zaux[j+1]
+  return(list(Z=Z, n=n,Z1=Zaux))
+}
+
+##Ejercicio 2a
+Ej2a <- function(nsim,dias,cuantia){
+  X<-numeric(nsim)
+  C<-numeric(nsim)
+  for (i in 1:nsim){
+    a <- Poisson_dia(6,dias)$n
+    X[i] <- a[length(a)] #número de reclamos en el primer día
+  }
+  for (i in 1:nsim){
+    C[i]<-sum(rnorm(X[i],600,sqrt(32000))) #cuantías en el primer día
+  }
+  prob<-mean(C<cuantia)
+  return(prob)
+}
+
+
+##############################################EJERCICIO 2B###################################################################
+eje2b <- function(nsim,n_reclamos,n_transitos){
+  x<-numeric(nsim)
+  for(i in 1:nsim){
+    x[i]<-sum(sample(c(1,0),n_reclamos,replace = TRUE,prob = c(0.4,0.6)))
+  }
+  return(list(x=x,prob=mean(x>=n_transitos)))
+}
+
+eje2b2<-function(nsim,n_reclamos){
+  media<-numeric(n_reclamos)
+  for (k in 1:n_reclamos) {
+    x<-numeric(nsim)
+    y<-numeric(nsim)
+    c<-numeric(nsim)
+    for(i in 1:nsim){
+      aux<-sample(c(1,0),k,replace = TRUE,prob = c(0.4,0.6))
+      x[i]<-sum(aux==1)
+      y[i]<-sum(aux==0)
+    }
+    for (i in 1:nsim) {
+      c[i]<-sum(rnorm(x[i],1000,sqrt(40000)))+sum(rnorm(y[i],500,sqrt(16000)))
+    }
+    media[k]<-mean(c)
+  }
+  return(list(medias=media,x=1:n_reclamos))
+}
+
+ej2b3<-function(nsim,porcentaje,dia){
+  ct<-numeric(nsim)
+  cat<-numeric(nsim)
+  x<-numeric(nsim)
+  y<-numeric(nsim)
+  for (i in 1:nsim) {
+    r<-Poisson_dia(6,dia)$n
+    r<-r[length(r)]
+    if(length(r)!=0){
+      aux<-sample(c(1,0),r,replace=TRUE,prob=c(0.4,0.6))
+      x[i]<-sum(aux==1)
+      y[i]<-sum(aux==0)
+    }
+    else{
+      x[i]<-0
+      y[i]<-0
+    }
+  }
+  for (i in 1:nsim) {
+    if(x[i]!=0 & y[i]!=0){
+      cat[i]<-sum(rnorm(x[i],1000,sqrt(40000)))
+      ct[i]<-cat[i]+sum(rnorm(y[i],500,sqrt(16000))) 
+    }
+    else{
+      cat[i]<-0
+      ct[i]<-0
+    }
+  }
+  return(mean(cat<porcentaje*ct))
+  
+}
+
+
+##############################################EJERCICIO 2C#######################
+
+ej2c1<-function(nsim,dia){
+  c<-500000
+  d<-80
+  x<-numeric(nsim)
+  for (i in 1:nsim) {
+    r<-Poisson_dia(6,dia)$n
+    r<-r[length(r)]
+    aux<-rnorm(r,600,sqrt(32000))
+    aux<-aux-d
+    aux[aux<0]<-0
+    x[i]<-c-sum(aux)
+  }
+  return(x)
+  
+}
+
+ej2c2<-function(nsim,dia){
+  c<-500000
+  d<-80
+  x<-numeric(nsim)
+  for (i in 1:nsim) {
+    r<-Poisson_dia(6,dia)$n
+    r<-r[length(r)]
+    aux<-rnorm(r,600,sqrt(32000))
+    aux<-aux-d
+    aux[aux<0]<-0
+    x[i]<-c-sum(aux)
+  }
+  return(list(m=mean(x<=0),x=x))
+}
+
+
+
+
 shinyServer(function(input, output, session){#######################Server#####################################
 
   
@@ -1267,6 +1519,157 @@ output$distribucion_estados<-renderHighchart({
                style = list(fontWeight = "bold", fontSize = "15px"),
                align = "center")
     
+  })
+  
+  
+  ########################################PROCESOS ESTOCASTICOS CONTINUOS#################
+  ##########################################################EJERCICIO1######################################
+  output$plot_proceso_NM<-renderHighchart({
+    Pnm<-Sim_NM(input$tiempo1)
+    data<-data.frame(Tiempo=Pnm$Z,Poblacion=Pnm$n)
+    hchart(data,type="line",hcaes(x=Tiempo,y=Poblacion)) %>% 
+      hc_title(text = 'TRAYECTORIA',align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  }) 
+  
+  ######################################################Ej1 Distribucion####################################
+  #Tabla resultados probabilidades
+  output$dst1<-function(){
+    res<<-Dist_Esta(input$ns1, input$Tde)
+    
+    res |>
+      kbl(booktabs = TRUE) |>
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) |> 
+      kable_styling(position = "center") %>% 
+      row_spec(0, bold = TRUE, background = "#F57B9A") |>
+      scroll_box(width = "200px", height = "400px")
+    
+  }
+  
+  
+  #Boton de descarga 
+  output$download_dst1 <- downloadHandler(
+    filename = function(){"DistribucionEstacionaria.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res), path = file)}
+  )
+  #Grafica:
+  
+  output$plot_distestacionaria<-renderHighchart({
+    Dst<-De_Tiempo(input$est,input$Tde1,input$nsd)
+    data<-data.frame(Tiempo=seq(0.1,input$Tde1,by=0.1),P=Dst)
+    hchart(data,type="line",hcaes(x=Tiempo,y=P)) %>% 
+      hc_title(text = "Evolución de la Distribución Estacionaria",align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  }) 
+  
+  
+  
+  ##########################################################EJERCICIO 2A####################################
+  #Grafica Proceso en funcion de días
+  output$plot_proceso_dia<-renderHighchart({
+    Pd<-Poisson_dia(6,input$ndia)
+    data<-data.frame(Dia=Pd$Z,Reclamos=Pd$n)
+    hchart(data,type="line",hcaes(x=Dia,y=Reclamos)) %>% 
+      hc_title(text = 'TRAYECTORIA',align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  }) 
+  
+  output$plot_proceso_reclamo<-renderHighchart({
+    Pr<-Poisson_reclamo(6,input$nreclamo)
+    data<-data.frame(Dia=Pr$Z,Reclamos=Pr$n)
+    hchart(data,type="line",hcaes(x=Dia,y=Reclamos)) %>% 
+      hc_title(text = 'TRAYECTORIA',align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  }) 
+  
+  output$proba<-renderUI({
+    x<-Ej2a(input$ansim,input$andia,input$acuantia)
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  ###########################EJERCICIO 2B###########################################################
+  
+  output$plot_b1<-renderPlot({
+    y<-eje2b(input$b1nsim,input$b1preclamo,input$b1atrans)
+    dat <- density(y$x)
+    dat<-data.frame(reclamos=dat$x,y=dat$y)
+    ggplot(data = dat , mapping = aes(x = reclamos, y = y)) +
+      geom_line() +
+      geom_area(mapping = aes(x = ifelse(reclamos>input$b1atrans,reclamos, input$b1atrans)), fill = "skyblue") +
+      ggtitle('Gráfica de densidad y probabilidad')
+  })
+  
+  output$probb1<-renderUI({
+    x<-eje2b(input$b1nsim,input$b1preclamo,input$b1atrans)
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x$prob)))
+  })
+  
+  output$plot_cuantia_esperada<-renderHighchart({
+    z<-eje2b2(input$b2nsim,input$b2nreclamo)
+    data <- data.frame(Reclamos = z$x, Cuantías = z$medias)
+    hchart(data,type="line",hcaes(x=Reclamos,y=Cuantías)) %>% 
+      hc_title(text = 'Cuantías esperadas',align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  })
+  
+  output$cuantiaespb2<-renderUI({
+    x<-eje2b2(input$b2nsim,input$b2nreclamo)$medias
+    h4(withMathJax(sprintf("La cuantía esperada es igual a: %.03f", x[length(x)])))
+  })
+  
+  output$prob2b3<-renderUI({
+    x<-ej2b3(input$b23nsim,input$b2porc,input$b23dia)
+    h4(withMathJax(sprintf("La probabilidad buscada  es igual a: %.03f", x)))
+  })
+  
+  output$plot_dist_mes<-renderHighchart({
+    z<-ej2c1(input$cnumsim,input$cnumdia)
+    hchart(density(z)) %>% 
+      hc_title(text = "Distribucion",align="center",width="25") |> 
+      hc_plotOptions(series = list(animation = FALSE)) |> 
+      hc_add_theme(hc_theme_bloom())
+  })
+  
+  output$plot_ecdf<-renderPlot({
+    y<-ej2c1(input$cnumsim,input$cnumdia)
+    z<-mean(y)
+    v<-sqrt(var(y))
+    y<-data.frame(X=y)
+    ggplot(y, aes(x = X)) +
+      stat_ecdf() +
+      labs(title = "Distribución Empírica", x = "Estado de cuentas", y = "Probabilidad acumulada") +
+      stat_function(fun=pnorm,n=100,args = list(mean=z,sd=v),color='orange',size=1.5) +
+      theme(plot.title = element_text(size = 20))
+  })
+  
+  output$prueba_ks<-renderUI({
+    y<-ej2c1(input$cnumsim,input$cnumdia)
+    z<-mean(y)
+    v<-sqrt(var(y))
+    d1<-rnorm(length(y),mean=z,sd=v)
+    ks<-as.numeric(ks.test(y,d1)[1])
+    h4(withMathJax(sprintf("El valor ks es %.03f, por lo tanto decimos que la distribución del estado
+                           cuentas sigue una distribución: $$N(%.03f,%.03f)$$",ks ,z,v^2)))
+  })
+  
+  output$prob2c<-renderUI({
+    x<-ej2c2(input$c2nsim,input$c2ndia)
+    h4(withMathJax(sprintf("La probabilidad buscada  es igual a: %.03f", x$m)))
+  })
+  
+  output$plot_bc2<-renderPlot({
+    y<-ej2c2(input$c2nsim,input$c2ndia)$x
+    dat <- density(y)
+    dat<-data.frame(capital=dat$x,y=dat$y)
+    ggplot(data = dat , mapping = aes(x = capital, y = y)) +
+      geom_line() +
+      geom_area(mapping = aes(x = ifelse(capital<0,capital, 0)), fill = "orange") +
+      ggtitle('Probabilidad de quiebre')
   })
 
 
