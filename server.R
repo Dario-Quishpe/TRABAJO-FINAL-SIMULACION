@@ -910,6 +910,7 @@ output$cargaks <- function(){
 
 #Grafica de las distribuciones acumuladas ks
 output$grafica_distribuciones <- renderPlot({   
+  
   inFile <- input$file2
   
   if(is.null(inFile))
@@ -991,7 +992,8 @@ output$info_boxKs <- renderInfoBox({
 
 # Carga de archivo Excel
 
-  #output$archivoboot <- renderTable(input$fileboot)
+  output$archivoboot <- renderTable(input$fileboot)
+
   output$cargaboot <- function(){
     inFile <- input$fileboot
   
@@ -999,7 +1001,6 @@ output$info_boxKs <- renderInfoBox({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-  
     res %>%
       kbl(booktabs = TRUE) %>%
       kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
@@ -1013,6 +1014,7 @@ output$info_boxKs <- renderInfoBox({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-unlist(res)
     hchart(res) %>% 
       hc_title(text = "Histograma",align="center",width="25") |> 
       hc_plotOptions(series = list(animation = FALSE)) |> 
@@ -1025,7 +1027,8 @@ output$info_boxKs <- renderInfoBox({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-    x<-int_conf_trad(as.vector(res),1-input$nivel_confboot)
+    res<-unlist(res)
+    x<-int_conf_trad(res,1-input$nivel_confboot/100)
     a<-x$ICI
     b<-x$ICS
     h4(withMathJax(sprintf("Intervalo de confianza tradicional: [%.02f,%.02f]",a,b )))
@@ -1038,7 +1041,8 @@ output$info_boxKs <- renderInfoBox({
       return(NULL)
     file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
     res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
-    x<-int_conf_boot(as.vector(res),1-input$nivel_confboot)
+    res<-unlist(res)
+    x<-int_conf_boot(res,1-input$nivel_confboot/100)
     a<-x$ICI
     b<-x$ICS
     h4(withMathJax(sprintf("Intervalo de confianza bootstrap: [%.02f,%.02f]",a,b )))
