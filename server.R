@@ -946,6 +946,54 @@ output$pteo_pareto <- renderUI({
       h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", ppareto(input$c_pareto,input$b_pareto,input$a_pareto))))
 })
 
+  ##Suma
+  
+  output$plot_pareto2 <- renderPlot({
+    sim_pareto <- data.frame(Simulacion = 1:input$nsim_pareto, Suma = unname(colSums(sim_pareto_())))
+    
+    ggplot(sim_pareto, aes(x = Suma)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = mean((sim_pareto$Suma)), sd = sd(sim_pareto$Suma)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  
+  #Probabilidad 2 simulada
+  
+  output$pest_pareto2 <- renderUI({
+    sim_pareto<- data.table(Simulacion = 1:input$nsim_pareto, Suma = unname(colSums(sim_pareto_())))[, Suma := ifelse(Suma < input$c_pareto2, 1, 0)]
+    x <- unlist(sim_pareto[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  #Probabilidad 2 teorica
+  
+  output$pteo_pareto2<- renderUI({
+    sim_pareto<- data.table(Simulacion = 1:input$nsim_pareto, Suma = unname(colSums(sim_pareto_())))
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", ppareto(input$c_pareto2,input$b_pareto+mean(sim_pareto$Suma),input$a_pareto+mean(sim_pareto$Suma)))))
+  })
+  
+  #Grafico 2
+  
+  output$plot_pareto_prob2<-renderPlot({
+    sim_pareto <- data.frame(Simulacion = 1:input$nsim_pareto, Suma = unname(colSums(sim_pareto_())))
+    dat<-density(sim_pareto$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line(colour = "#e42645")+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = mean((sim_pareto$Suma)), sd = sd(sim_pareto$Suma)), col = "#1b98e0", size = 1.5) +
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_pareto2,Suma, input$c_pareto2)), fill = "skyblue")
+    
+  })
+  
+  
+  
+
   ##################################### DISTRIBUCION UNIFORME######################################################################################################################  
   
 # Simulaciones 
