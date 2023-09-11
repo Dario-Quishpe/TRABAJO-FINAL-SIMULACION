@@ -106,8 +106,8 @@ int_conf_boot<-function(muestra,alfa){
 int_conf_trad<-function(muestra,alfa){
   n <- length(muestra)
   t<-qt(alfa/2, n-1, lower.tail = F)
-  ic_inf<-mean(muestra)-t*sqrt(var(x))/sqrt(n)
-  ic_sup<-mean(muestra)+t*sqrt(var(x))/sqrt(n)
+  ic_inf<-mean(muestra)-t*sqrt(var(muestra))/sqrt(n)
+  ic_sup<-mean(muestra)+t*sqrt(var(muestra))/sqrt(n)
   return(list(ICI=ic_inf,ICS=ic_sup))
 }
 ############################################FUNCION QUE DETERMINA EL KS################################
@@ -1437,8 +1437,9 @@ output$info_boxKs <- renderInfoBox({
   
     if(is.null(inFile))
       return(NULL)
-    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
-    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    #file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    #res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-read_excel(inFile$datapath,1)
     res %>%
       kbl(booktabs = TRUE) %>%
       kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>%
@@ -1450,8 +1451,9 @@ output$info_boxKs <- renderInfoBox({
     inFile <- input$fileboot
     if(is.null(inFile))
       return(NULL)
-    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
-    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    #file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    #res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-read_excel(inFile$datapath,1)
     res<-unlist(res)
     hchart(res) %>% 
       hc_title(text = "Histograma",align="center",width="25") |> 
@@ -1463,9 +1465,11 @@ output$info_boxKs <- renderInfoBox({
     inFile <- input$fileboot
     if(is.null(inFile))
       return(NULL)
-    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
-    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    #file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    #res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-read_excel(inFile$datapath,1)
     res<-unlist(res)
+    print(res)
     x<-int_conf_trad(res,1-input$nivel_confboot/100)
     a<-x$ICI
     b<-x$ICS
@@ -1477,8 +1481,9 @@ output$info_boxKs <- renderInfoBox({
     inFile <- input$fileboot
     if(is.null(inFile))
       return(NULL)
-    file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
-    res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    #file.rename(inFile$datapath, paste(inFile$datapath, ".xlsx", sep=""))
+    #res <- read_excel(paste(inFile$datapath, ".xlsx", sep=""), 1)
+    res<-read_excel(inFile$datapath,1)
     res<-unlist(res)
     x<-int_conf_boot(res,1-input$nivel_confboot/100)
     a<-x$ICI
