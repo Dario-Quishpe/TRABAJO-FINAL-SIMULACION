@@ -2,6 +2,8 @@ suppressPackageStartupMessages(library(shiny))
 suppressPackageStartupMessages(library(shinydashboard))
 suppressPackageStartupMessages(library(highcharter))
 suppressPackageStartupMessages(library(shinyWidgets))
+suppressPackageStartupMessages(library(shinythemes))
+
 options(dplyr.summarise.inform = FALSE)
 
 # UI
@@ -11,7 +13,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                            column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px"))
 ),
 
-        navbarPage("Simulación",
+        navbarPage("Simulación",theme=shinytheme("journal"),
                    navbarMenu("Teorema del Límite Central (Distribuciones Discretas)",
                               tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias binomial"),
