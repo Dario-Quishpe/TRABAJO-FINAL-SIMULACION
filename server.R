@@ -380,6 +380,127 @@ shinyServer(function(input, output, session){#######################Server######
   
 
 
+  ##################################### DISTRIBUCION BINOMIAL NEGATIVA######################################################################################################################  
+  
+  # Simulaciones 
+  sim_bn <-  reactive({
+    req(input$nsim_bn >= 10)
+    res_bn <- matrix(nrow = input$nbn, ncol = input$nsim_bn)
+    for(j in 1:input$nsim_bn){
+      #numero de exitos requerido
+      #probabilidad de éxito en un solo ensayo
+      res_bn[, j] <- rnbinom(input$nbn, size = input$exi_bn, prob = input$prob_bn)
+    }
+    colnames(res_bn) <- paste0("Simulacion_", 1:input$nsim_bn)
+    res_bn
+  })
+  
+  
+  ## Tablas con los resultados de la simulación
+  output$tb_bn <- function(){
+    res_bn <<- data.table(sim_bn())
+    
+    res_bn %>% 
+      kbl(booktabs = TRUE) %>%
+      kable_styling(full_width = F, bootstrap_options = c("condensed"), font_size = 11) %>% 
+      #column_spec(1, bold = TRUE, border_right = FALSE, border_left = FALSE) %>% 
+      row_spec(0, background = "#33639f", color = "#ffffff") %>% 
+      scroll_box(width = "1000px", height = "320px")
+  }
+  # Botón de descarga
+  output$download_bn <- downloadHandler(
+    filename = function(){"DistribucionBinoNegativa.xlsx"},
+    content = function(file){write_xlsx(as.data.frame(res_bn), path = file)}
+  )
+  
+  
+  # Gráfico que contrasta la densidad observada con la teórica
+  output$plot_bn = renderPlot({
+    sim_bn <- data.frame(Simulacion = 1:input$nsim_bn, Media = unname(colMeans(sim_bn())))
+    
+    ggplot(sim_bn, aes(x = Media)) + 
+      geom_histogram(aes(y =..density..), breaks = seq((min(sim_bn$Media) - 0.5), (max(sim_bn$Media) + 0.5), by = 0.05), colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = mean(sim_bn$Media), sd = sd(sim_bn$Media)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  
+  # Probabilidades estimadas y teóricas
+  output$pest_bn <- renderUI({
+    sim_bn <- data.table(Simulacion = 1:input$nsim_bn, Media = unname(colMeans(sim_bn())))[, Marca := ifelse(Media < input$c_bn, 1, 0)]
+    x <- unlist(sim_bn[,mean(Marca)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  
+  output$pteo_bn <- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_bn))))
+  })
+  
+  # grafico DE LA DENSIDAD 
+  
+  #no se hace dinamica
+  output$plot_bn_1<-renderPlot({
+    sim_bn <- data.frame(Simulacion = 1:input$nsim_bn, Media = unname(colMeans(sim_bn())))
+    dat<-density(sim_bn$Media)
+    dat<-data.frame(Media=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+      ylab("Densidad") +
+      #grafico de la densidad normal
+      stat_function(fun = dnorm, args = list(mean = mean(sim_bn$Media), sd =sd(sim_bn$Media)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Media<input$c_bn,Media, input$c_bn)), fill = "skyblue")
+    
+  })
+  
+  
+  
+  
+  #GRAFICO SUMA DE VARIABLES
+  
+  output$plot_bn_2 <- renderPlot({
+    sim_bn <- data.frame(Simulacion = 1:input$nsim_bn, Suma = unname(colSums(sim_bn())))
+    
+    ggplot(sim_bn, aes(x = Suma)) + 
+      geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+      geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = mean(sim_bn$Suma), sd = sd(sim_bn$Suma)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    
+  })
+  #PLOT DE PROBABILIDADES
+  
+  #toca hacer bien esta proba
+  output$pest_bn_3 <- renderUI({
+    sim_bn <- data.table(Simulacion = 1:input$nsim_bn, Suma = unname(colSums(sim_bn())))[, Suma := ifelse(Suma < input$prob_bn, 1, 0)]
+    x <- unlist(sim_bn[,mean(Suma)])
+    h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+  })
+  ###tengo q cambiar la probabilidad teorica y la simulada
+  output$pteo_bn_3<- renderUI({
+    h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_bn_1))))
+  })
+  
+  
+  #GRAFICO DE LA DESNSIDAD
+  
+  output$plot_bn_prob2<-renderPlot({
+    sim_bn <- data.frame(Simulacion = 1:input$nsim_bn, Suma = unname(colSums(sim_bn())))
+    dat<-density(sim_bn$Suma)
+    dat<-data.frame(Suma=dat$x,y=dat$y)
+    ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+      ylab("Densidad") +
+      stat_function(fun = dnorm, args = list(mean = mean(sim_bn$Suma), sd = sd(sim_bn$Suma)), col = "#1b98e0", size = 1.5) + 
+      theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+      geom_area(mapping = aes(x = ifelse(Suma<input$c_bn_1,Suma, input$c_bn_1)), fill = "skyblue")
+    
+  })
+  
+  
   
   
   ######################################DISTRIBUCION BINOMIAL########################################
@@ -1041,13 +1162,13 @@ output$plot_unif = renderPlot({
 
 # Probabilidades estimadas y teóricas
 output$pest_unif <- renderUI({
-      sim_unif <- data.table(Simulacion = 1:input$nsim_unif, Media = unname(colMeans(sim_df())))[, Marca := ifelse(Media < input$c_unif, 1, 0)]
+      sim_unif <- data.table(Simulacion = 1:input$nsim_unif, Media = unname(colMeans(sim_df())))[, Marca := ifelse(Media < input$c_unif_1, 1, 0)]
         x <- unlist(sim_unif[,mean(Marca)])
         h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
   })
 
 output$pteo_unif <- renderUI({
-      h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_unif))))
+      h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_unif_1))))
 })
 
 # Carga de archivo Excel
@@ -1068,6 +1189,68 @@ output$carga <- function(){
             scroll_box(width = "450px", height = "350px")
 
 }
+
+
+
+
+
+# grafico DE LA DENSIDAD 
+output$plot_uni_1<-renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Media = unname(colMeans(sim_df())))
+  dat<-density(sim_df$Media)
+  dat<-data.frame(Media=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
+    ylab("Densidad") +
+    #grafico de la densidad normal
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Media), sd =sd(sim_df$Media)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Media<input$c_unif_1,Media, input$c_unif_1)), fill = "skyblue")
+  
+})
+
+
+
+
+#GRAFICO SUMA DE VARIABLES
+
+output$plot_uni_2 <- renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
+  #NO ME QUEDA BIEN LA NORMAL APROXIMADA 
+  ggplot(sim_df, aes(x = Suma)) + 
+    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
+    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+})
+#PLOT DE PROBABILIDADES
+output$pest_unif_3 <- renderUI({
+  sim_df <- data.table(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))[, Suma := ifelse(Suma < input$c_unif_2, 1, 0)]
+  x <- unlist(sim_df[,mean(Suma)])
+  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
+})
+  
+output$pteo_unif_3<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm())))
+})
+
+
+#GRAFICO DE LA DESNSIDAD
+
+output$plot_unif<-renderPlot({
+  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
+  dat<-density(sim_df$Suma)
+  dat<-data.frame(Suma=dat$x,y=dat$y)
+  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
+    ylab("Densidad") +
+    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
+    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
+                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    geom_area(mapping = aes(x = ifelse(Suma<input$c_unif_2,Suma, input$c_unif_2)), fill = "skyblue")
+  
+})
 
 
 ###################################DISTRIBUCION BETHA########################################################################################
@@ -1195,63 +1378,7 @@ output$plot_betha_prob2<-renderPlot({
 
 
 
-# grafico DE LA DENSIDAD 
-output$plot_uni_1<-renderPlot({
-  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Media = unname(colMeans(sim_df())))
-  dat<-density(sim_df$Media)
-  dat<-data.frame(Media=dat$x,y=dat$y)
-  ggplot(dat, mapping = aes(x = Media, y = y)) + geom_line()+
-    ylab("Densidad") +
-    #grafico de la densidad normal
-    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Media), sd =sd(sim_df$Media)), col = "#1b98e0", size = 1.5) + 
-    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
-                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-    geom_area(mapping = aes(x = ifelse(Media<input$b,Media, input$b)), fill = "skyblue")
-  
-})
 
-
-
-
-#GRAFICO SUMA DE VARIABLES
-
-output$plot_uni_2 <- renderPlot({
-  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
-  #NO ME QUEDA BIEN LA NORMAL APROXIMADA 
-  ggplot(sim_df, aes(x = Suma)) + 
-    geom_histogram(aes(y =..density..),colour = "#e42645", fill = "white") +
-    geom_density() + stat_density(geom="line", color = "#e42645", linewidth = 1) + ylab("Densidad") +
-    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
-    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
-                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-  
-})
-#PLOT DE PROBABILIDADES
-output$pest_unif_3 <- renderUI({
-  sim_df <- data.table(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))[, Suma := ifelse(Suma < input$b, 1, 0)]
-  x <- unlist(sim_df[,mean(Suma)])
-  h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
-})
-###tengo q cambiar la probabilidad teorica y la simulada
-output$pteo_unif_3<- renderUI({
-  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam2-input$ngam*input$lambdagam*input$alfagam)/(sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam))))))
-})
-
-
-#GRAFICO DE LA DESNSIDAD
-
-output$plot_unif_prob2<-renderPlot({
-  sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
-  dat<-density(sim_df$Suma)
-  dat<-data.frame(Suma=dat$x,y=dat$y)
-  ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
-    ylab("Densidad") +
-    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
-    theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
-                                        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-    geom_area(mapping = aes(x = ifelse(Suma<input$b,Suma, input$b)), fill = "skyblue")
-  
-})
 
 ##################################### DISTRIBUCION CHI-CUADRADO######################################################################################################################  
 
@@ -1302,13 +1429,13 @@ output$plot_chi = renderPlot({
 
 #no me quedan bien 
 output$pest_chi <- renderUI({
-  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))[, Marca := ifelse(Media < input$c_chi, 1, 0)]
+  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))[, Marca := ifelse(Media < input$c_chi_1, 1, 0)]
   x <- unlist(sim_chi[,mean(Marca)])
   h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
 })
 
 output$pteo_chi <- renderUI({
-  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_chi))))
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_chi_1))))
 })
 
 
@@ -1325,7 +1452,7 @@ output$plot_chi_1<-renderPlot({
     stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Media), sd =sd(sim_chi$Media)), col = "#1b98e0", size = 1.5) + 
     theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
                                         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-    geom_area(mapping = aes(x = ifelse(Media<input$chi_grados,Media, input$chi_grados)), fill = "skyblue")
+    geom_area(mapping = aes(x = ifelse(Media<input$c_chi_1,Media, input$c_chi_1)), fill = "skyblue")
   
 })
 
@@ -1349,13 +1476,13 @@ output$plot_chi_2 <- renderPlot({
 
 #toca hacer bien esta proba
 output$pest_unif_3 <- renderUI({
-  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))[, Suma := ifelse(Suma < input$b, 1, 0)]
+  sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))[, Suma := ifelse(Suma < input$c_chi_2, 1, 0)]
   x <- unlist(sim_df[,mean(Suma)])
   h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
 })
 ###tengo q cambiar la probabilidad teorica y la simulada
 output$pteo_unif_3<- renderUI({
-  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm((input$c_gam2-input$ngam*input$lambdagam*input$alfagam)/(sqrt(input$alfagam*input$lambdagam^2)*sqrt(input$ngam))))))
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(c_chi_2))))
 })
 
 
@@ -1370,9 +1497,17 @@ output$plot_chi_prob2<-renderPlot({
     stat_function(fun = dnorm, args = list(mean = mean(sim_chi$Suma), sd = sd(sim_chi$Suma)), col = "#1b98e0", size = 1.5) + 
     theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
                                         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-    geom_area(mapping = aes(x = ifelse(Suma<input$chi_grados,Suma, input$chi_grados)), fill = "skyblue")
+    geom_area(mapping = aes(x = ifelse(Suma<input$c_chi_2,Suma, input$c_chi_2)), fill = "skyblue")
   
 })
+
+
+
+
+
+
+
+
 
 ##############################KS#####################################
 # Carga de archivo Excel

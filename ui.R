@@ -7,7 +7,18 @@ suppressPackageStartupMessages(library(shinythemes))
 options(dplyr.summarise.inform = FALSE)
 
 # UI
-shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px")), # Logo página principal
+shinyUI(fluidPage(tags$head( #COLOR DEGRADADO
+  tags$style(HTML(
+    "
+      body {
+        background:linear-gradient(to bottom, white, #00FFEC);
+        background-attachment:fixed;
+        background-size:cover;
+        background-repeat:no-repeat;
+      }
+      "
+  ))
+),fluidRow(column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px")), # Logo página principal
                            column(width=8,style="background:black", h1("TRABAJO GRUPAL FINAL DE SIMULACIÓN-2023A ", 
                                                                        style = "background:#F9EDE9 ;text-align:center;align-items:center;color:'black';padding:30px;font-size:2.2em")),
                            column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px"))
@@ -79,8 +90,77 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        
                               ),
                               tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias binomial negativa"),
+                                       h4("Simulación de variables aleatorias Binomial Negativa"),
                                        br(),
+                                       
+                                       fluidRow(column(3,
+                                                       numericInput("nsim_bn", "Número de simulaciones:", value = 1000, min = 20, max = 2000),
+                                                       numericInput("nbn", "Número de variables a simular:", value = 50, min = 10, max = 200),
+                                                       numericInput("exi_bn", "Número de éxitos:", value = 7, min = 1, max = 50),
+                                                       numericInput("prob_bn", "Probabilidad de éxito:", value = 0.5, min = 0, max = 1)
+                                                       
+                                       ),
+                                       column(9,
+                                              fluidRow(
+                                                div(tableOutput("tb_bn"), style = "font-size:80%"),
+                                                br(),
+                                                downloadButton("download_bn", "Descargar Simulaciones")
+                                              )
+                                       )
+                                       ),
+                                       h4("Aplicación del Teorema del Límite Central"),
+                                       br(),
+                                       #llamemos a la grafica
+                                       h4(strong("Promedio de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_bn", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       #resultados numericos
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_bn", "Ingrese el valor de c:", value = 7, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_bn'),
+                                                uiOutput('pteo_bn')
+                                         )
+                                       ),
+                                       br(),
+                                       #grafica
+                                       fluidRow(
+                                         plotOutput("plot_bn_1", height = "500px")
+                                       ),
+                                       br(),
+                                       br(),
+                                       h4(strong("Suma de variables")),
+                                       fluidRow(
+                                         plotOutput("plot_bn_2", height = "500px")
+                                       ),
+                                       br(),
+                                       h4("Aproximación de probabilidades"),
+                                       br(),
+                                       br(),
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_bn_1", "Ingrese el valor de c:", value =400 , min = 0, max = 900)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                                uiOutput('pest_bn_3'),
+                                                uiOutput('pteo_bn_3')
+                                         )
+                                       ),
+                                       fluidRow(
+                                         plotOutput("plot_bn_prob2", height = "500px")
+                                       ),
+                                       br(),
+                             
+                                       
+                                       
                               ),
                               tabPanel("Distribución Poisson", tags$style("h4 {color: #035FC6; font-family: roman}"),
                                        h4("Simulación de variables aleatorias poisson"),
@@ -214,7 +294,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                                        numericInput("a", "Límite Inferior:", value = -3, min = -20, max = 10),
                                                        numericInput("b", "Límite Superior:", value = 4, min = 0, max = 30),
                                                        numericInput("nunif", "Número de variables:", value = 12, min = 10, max = 1000),
-                                                       numericInput("nsim_unif", "Número de simulaciones:", value = 20, min = 20, max = 2000)
+                                                       numericInput("nsim_unif", "Número de simulaciones:", value = 200, min = 20, max = 2000)
                                        ),
                                        column(9, 
                                               fluidRow(
@@ -235,7 +315,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        br(),
                                        fluidRow(
                                          column(3,
-                                                numericInput("c_unif", "Ingrese el valor de c:", value = 2, min = 0, max = 20)
+                                                numericInput("c_unif_1", "Ingrese el valor de c:", value = 0.5, min = 0, max = 20)
                                          ),
                                          column(9,
                                                 h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
@@ -258,7 +338,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        br(),
                                        fluidRow(
                                          column(3,
-                                                numericInput("C_UNIFO", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
+                                                numericInput("C_unif_2", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
                                          ),
                                          column(9,
                                                 h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
@@ -267,7 +347,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                          )
                                        ),
                                        fluidRow(
-                                         plotOutput("plot_unif_prob2", height = "500px")
+                                         plotOutput("plot_unif", height = "500px")
                                        ),
                                        br(),
                                        
@@ -557,7 +637,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        br(),
                                        fluidRow(
                                          column(3,
-                                                numericInput("c_chi", "Ingrese el valor de c:", value = 4, min = 0, max = 20)
+                                                numericInput("c_chi_1", "Ingrese el valor de c:", value = 4, min = 0, max = 20)
                                          ),
                                          column(9,
                                                 h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
@@ -578,8 +658,16 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        br(),
                                        h4("Aproximación de probabilidades"),
                                        br(),
-                                       
-                                       #falta aqui las probas
+                                       fluidRow(
+                                         column(3,
+                                                numericInput("c_chi_2", "Ingrese el valor de c:", value = 4, min = 0, max = 20)
+                                         ),
+                                         column(9,
+                                                h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                                uiOutput('pest_chi'),
+                                                uiOutput('pteo_chi')
+                                         )
+                                       ),
                                        
                                        
                                        fluidRow(
