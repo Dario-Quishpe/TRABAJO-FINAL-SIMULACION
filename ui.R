@@ -17,8 +17,12 @@ shinyUI(fluidPage(tags$head( #COLOR DEGRADADO
         background-repeat:no-repeat;
       }
       "
-  ))
-),fluidRow(column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px")), # Logo página principal
+  )), 
+  #para las animaciones
+      tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"),
+      shinyjs::useShinyjs()
+  
+), fluidRow(column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px")), # Logo página principal
                            column(width=8,style="background:black", h1("TRABAJO GRUPAL FINAL DE SIMULACIÓN-2023A ", 
                                                                        style = "background:#F9EDE9 ;text-align:center;align-items:center;color:'black';padding:30px;font-size:2.2em")),
                            column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px"))
@@ -26,7 +30,7 @@ shinyUI(fluidPage(tags$head( #COLOR DEGRADADO
 
         navbarPage("Simulación",theme=shinytheme("journal"),
                    navbarMenu("Teorema del Límite Central (Distribuciones Discretas)",
-                              tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}", id = "tab_binomial"), #identificador para cambiar las pantallas
                                        h4("Simulación de variables aleatorias binomial"),
                                        br(),
                                        fluidRow(column(3,
@@ -89,7 +93,7 @@ shinyUI(fluidPage(tags$head( #COLOR DEGRADADO
                                        br(),
                                        
                               ),
-                              tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}"),
+                              tabPanel("Distribución Binomial Negativa", tags$style("h4 {color: #035FC6; font-family: roman}", id= "tab_negativa"),
                                        h4("Simulación de variables aleatorias Binomial Negativa"),
                                        br(),
                                        

@@ -375,7 +375,21 @@ ej2c2<-function(nsim,dia){
 
 shinyServer(function(input, output, session){#######################Server#####################################
 
+################################################################TRANSICIONES################################
+  # Inicialmente, ocultar la pestaña de Binomial Negativa
+  shinyjs::hide("tab_negativa")
   
+  # Transición a la pestaña de Binomial Negativa
+  observeEvent(input$nsim_binom, {
+    shinyjs::hide("tab_binomila", anim = "fadeOut")
+    shinyjs::show("tab-negativa", anim = "fadeIn")
+  })
+  
+  # Transición a la pestaña de Binomial
+  observeEvent(input$nsim_bn, {
+    shinyjs::hide("tab-negativa", anim = "fadeOut")
+    shinyjs::show("tab-binomial", anim = "fadeIn")
+  })
 ############################################DISTRIBUCIONES DISCRETAS################################
   
 
