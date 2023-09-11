@@ -5,10 +5,12 @@ suppressPackageStartupMessages(library(shinyWidgets))
 options(dplyr.summarise.inform = FALSE)
 
 # UI
-shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height="90px"), width=2), # Logo página principal
-                           column(10, h1("Trabajo Final de Simulación", 
-                                         style = "text-align:center;color:#9A9A9A;padding:20px;font-size:2.2em"))
-                           ),
+shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px")), # Logo página principal
+                           column(width=8,style="background:black", h1("TRABAJO GRUPAL FINAL DE SIMULACIÓN-2023A ", 
+                                                                       style = "background:#F9EDE9 ;text-align:center;align-items:center;color:'black';padding:30px;font-size:2.2em")),
+                           column(width=2,align="center",style="background:#DEE9F9",img(src="https://cem.epn.edu.ec/imagenes/logos_institucionales/big_png/BUHO_EPN_big.png", width="110px", height="125px"))
+),
+
         navbarPage("Simulación",
                    navbarMenu("Teorema del Límite Central (Distribuciones Discretas)",
                               tabPanel("Distribución Binomial", tags$style("h4 {color: #035FC6; font-family: roman}"),
