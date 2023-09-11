@@ -336,7 +336,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        br(),
                               ),
                               tabPanel("Distribución de Pareto", tags$style("h4 {color: #035FC6; font-family: roman}"),
-                                       h4("Simulación de variables aleatorias (PARETO)"),
+                                       h4("Simulación de variables aleatorias (PARETO)",style = "background:#FEE9DF  ;text-align:center;align-items:center;color:'black';padding:25px;font-size:1.5em",align="center"),
                                        br(),
                                        fluidRow(column(3, 
                                                        numericInput("a_pareto", "Minimo(escala):", value = 2, min = 1, max = 1000),
@@ -353,7 +353,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                        )
                                        ),
                                        br(),
-                                       h4("Aplicación del Teorema del Límite Central"),
+                                       h4("Aplicación del Teorema del Límite Central",style = "background:#FEE9DF  ;text-align:center;align-items:center;color:'black';padding:25px;font-size:1.5em",align="center"),
                                        column(12,box(plotOutput("plot_Pareto_ggplot",height = 400), width = 12)),
                                        br(),
                                        
@@ -371,7 +371,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                                          )
                                        ),
                                        br(),
-                               h4(strong("Suma de variables")),
+                               h4(strong("Suma de variables"),style = "background:#FEE9DF  ;text-align:center;align-items:center;color:'black';padding:25px;font-size:1.5em",align="center"),
                                fluidRow(
                                  plotOutput("plot_pareto2", height = "500px")
                                ),
@@ -589,7 +589,7 @@ shinyUI(fluidPage(fluidRow(column(width=2,align="center",style="background:#DEE9
                               ),
                    ),
                    tabPanel("Kolmogorov - Smirnov",
-                            h4("Test de Kolmogorov - Smirnov"),
+                            h4("Test de Kolmogorov - Smirnov",style = "background:#FEE9DF  ;text-align:center;align-items:center;color:'black';padding:26px;font-size:1.8em",align="center"),
                             fluidRow(
                                   column(4, 
                                          fileInput('file2', 'Seleccione el archivo .xlsx', accept = c(".xlsx")),
