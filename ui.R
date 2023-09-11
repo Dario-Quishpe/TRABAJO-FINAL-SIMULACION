@@ -367,6 +367,30 @@ shinyUI(fluidPage(fluidRow(column(tags$img(src="logo.png", width="160px", height
                                          )
                                        ),
                                        br(),
+                               h4(strong("Suma de variables")),
+                               fluidRow(
+                                 plotOutput("plot_pareto2", height = "500px")
+                               ),
+                               br(),
+                               h4("Aproximación de probabilidades"),
+                               br(),
+                               fluidRow(
+                                 column(3,
+                                        numericInput("c_pareto2", "Ingrese el valor de c:", value = 70, min = 0, max = 100)
+                                 ),
+                                 column(9,
+                                        h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
+                                        uiOutput('pest_pareto2'),
+                                        br(),
+                                        uiOutput('pteo_pareto2'),
+                                 )
+                               ),
+                               fluidRow(
+                                 plotOutput("plot_pareto_prob2", height = "500px")
+                               ),
+                               br(),
+                               
+                               
 
                     
                                 
