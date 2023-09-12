@@ -11,7 +11,7 @@ shinyUI(fluidPage(tags$head( #COLOR DEGRADADO
   tags$style(HTML(
     "
       body {
-        background:linear-gradient(to bottom, white, #00FFEC);
+        background:linear-gradient(to bottom, #d9f1ff, #7ac8f5);
         background-attachment:fixed;
         background-size:cover;
         background-repeat:no-repeat;
