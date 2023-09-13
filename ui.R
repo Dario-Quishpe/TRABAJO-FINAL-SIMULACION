@@ -313,7 +313,7 @@ navbarPage("Modulos",theme=shinytheme("journal"),
                                br(),
                                fluidRow(
                                  column(3,
-                                        numericInput("c_unif", "Ingrese el valor de c:", value = 2, min = 0, max = 20)
+                                        numericInput("c_unif_1", "Ingrese el valor de c:", value = 2, min = 1, max = 20)
                                  ),
                                  column(9,
                                         h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
@@ -336,7 +336,7 @@ navbarPage("Modulos",theme=shinytheme("journal"),
                                br(),
                                fluidRow(
                                  column(3,
-                                        numericInput("C_UNIFO", "Ingrese el valor de c:", value = 9, min = 0, max = 100)
+                                        numericInput("c_unif_2", "Ingrese el valor de c:", value = 9, min = 1, max = 100)
                                  ),
                                  column(9,
                                         h4("$$\\text{Dado que } {Y} = \\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(Y \\leq c)$$"),
@@ -345,7 +345,7 @@ navbarPage("Modulos",theme=shinytheme("journal"),
                                  )
                                ),
                                fluidRow(
-                                 plotOutput("plot_unif_prob2", height = "500px")
+                                 plotOutput("plot_unifo", height = "500px")
                                ),
                                br(),
                                
@@ -633,7 +633,7 @@ navbarPage("Modulos",theme=shinytheme("journal"),
                                br(),
                                fluidRow(
                                  column(3,
-                                        numericInput("c_chi", "Ingrese el valor de c:", value = 4, min = 0, max = 20)
+                                        numericInput("c_chi_1", "Ingrese el valor de c:", value = 7, min = 0, max = 20)
                                  ),
                                  column(9,
                                         h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
@@ -655,7 +655,16 @@ navbarPage("Modulos",theme=shinytheme("journal"),
                                h4("Aproximación de probabilidades"),
                                br(),
                                
-                               #falta aqui las probas
+                               fluidRow(
+                                 column(3,
+                                        numericInput("c_chi_2", "Ingrese el valor de c:", value = 400, min = 0, max = 20)
+                                 ),
+                                 column(9,
+                                        h4("$$\\text{Dado que } \\bar{X} = \\frac{1}{n}\\sum_{i=1}^{n} X_i,\\quad \\text{ se busca calcular }\\quad P(\\bar{X} \\leq c)$$"),
+                                        uiOutput('pest_chi_3'),
+                                        uiOutput('pteo_chi_3')
+                                 )
+                               ),
                                
                                
                                fluidRow(

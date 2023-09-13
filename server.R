@@ -1239,27 +1239,32 @@ output$plot_uni_2 <- renderPlot({
                                         panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
 })
-#PLOT DE PROBABILIDADES
+
+
+
+#Probabilidad 2 simulada
+
 output$pest_unif_3 <- renderUI({
   sim_df <- data.table(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))[, Suma := ifelse(Suma < input$c_unif_2, 1, 0)]
   x <- unlist(sim_df[,mean(Suma)])
   h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
 })
-  
+
+#Probabilidad 2 teorica
+
 output$pteo_unif_3<- renderUI({
-  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm())))
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_unif_2))))
 })
 
+#Grafico 2
 
-#GRAFICO DE LA DESNSIDAD
-
-output$plot_unif<-renderPlot({
+output$plot_unifo<-renderPlot({
   sim_df <- data.frame(Simulacion = 1:input$nsim_unif, Suma = unname(colSums(sim_df())))
   dat<-density(sim_df$Suma)
   dat<-data.frame(Suma=dat$x,y=dat$y)
   ggplot(dat, mapping = aes(x = Suma, y = y)) + geom_line()+
     ylab("Densidad") +
-    stat_function(fun = dnorm, args = list(mean = mean(sim_df$Suma), sd = sd(sim_df$Suma)), col = "#1b98e0", size = 1.5) + 
+    stat_function(fun = dnorm, args = list(mean = mean(input$Suma), sd = sd(input$Suma)), col = "#1b98e0", size = 1.5) +
     theme_light(base_size = 18) + theme(plot.title = element_text(hjust = 0.5),
                                         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
     geom_area(mapping = aes(x = ifelse(Suma<input$c_unif_2,Suma, input$c_unif_2)), fill = "skyblue")
@@ -1455,7 +1460,7 @@ output$pteo_chi <- renderUI({
 
 # grafico DE LA DENSIDAD 
 
-#no se hace dinamica
+
 output$plot_chi_1<-renderPlot({
   sim_chi <- data.frame(Simulacion = 1:input$nsim_chi, Media = unname(colMeans(sim_chi())))
   dat<-density(sim_chi$Media)
@@ -1486,17 +1491,18 @@ output$plot_chi_2 <- renderPlot({
                                         panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
 })
-#PLOT DE PROBABILIDADES
+#Probabilidad 2 simulada
 
-#toca hacer bien esta proba
-output$pest_unif_3 <- renderUI({
+output$pest_chi_3 <- renderUI({
   sim_chi <- data.table(Simulacion = 1:input$nsim_chi, Suma = unname(colSums(sim_chi())))[, Suma := ifelse(Suma < input$c_chi_2, 1, 0)]
-  x <- unlist(sim_df[,mean(Suma)])
+  x <- unlist(sim_chi[,mean(Suma)])
   h4(withMathJax(sprintf("La probabilidad buscada es igual a: %.03f", x)))
 })
-###tengo q cambiar la probabilidad teorica y la simulada
-output$pteo_unif_3<- renderUI({
-  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(c_chi_2))))
+
+#Probabilidad 2 teorica
+
+output$pteo_chi_3<- renderUI({
+  h4(withMathJax(sprintf("La probabilidad teórica es igual a: %.03f", pnorm(input$c_chi_2))))
 })
 
 
